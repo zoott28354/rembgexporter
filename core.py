@@ -407,25 +407,25 @@ def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
                 ico_path = os.path.join(cartella_out, 'favicon.ico')
                 cmd = [magick_path, tmp_path, '-define', 'icon:auto-resize=256,128,64,48,32,24,16', ico_path]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                log_fn(f"  ✓ favicon.ico")
+                log_fn(f"  [OK] favicon.ico")
 
                 # 2. favicon.png (32x32)
                 png32_path = os.path.join(cartella_out, 'favicon.png')
                 cmd = [magick_path, tmp_path, '-resize', '32x32', png32_path]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                log_fn(f"  ✓ favicon.png (32x32)")
+                log_fn(f"  [OK] favicon.png (32x32)")
 
                 # 3. favicon-192.png (Android)
                 png192_path = os.path.join(cartella_out, 'favicon-192.png')
                 cmd = [magick_path, tmp_path, '-resize', '192x192', png192_path]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                log_fn(f"  ✓ favicon-192.png (Android)")
+                log_fn(f"  [OK] favicon-192.png (Android)")
 
                 # 4. favicon-512.png (iOS)
                 png512_path = os.path.join(cartella_out, 'favicon-512.png')
                 cmd = [magick_path, tmp_path, '-resize', '512x512', png512_path]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                log_fn(f"  ✓ favicon-512.png (iOS)")
+                log_fn(f"  [OK] favicon-512.png (iOS)")
 
                 # 5. manifest.json (PWA)
                 manifest = {
@@ -442,7 +442,7 @@ def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
                 manifest_path = os.path.join(cartella_out, 'manifest.json')
                 with open(manifest_path, 'w') as f:
                     json.dump(manifest, f, indent=2)
-                log_fn(f"  ✓ manifest.json (PWA)")
+                log_fn(f"  [OK] manifest.json (PWA)")
 
                 log_fn(f"[OK] Favicon completa generata")
 
@@ -518,9 +518,9 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
                     output_path = os.path.join(cartella_out, nome_file)
                     cmd = [magick_path, tmp_path, '-resize', f'{w}x{h}', output_path]
                     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    log_fn(f"  ✓ {nome_file} ({w}x{h})")
+                    log_fn(f"  [OK] {nome_file} ({w}x{h})")
 
-                log_fn(f"[OK] {store.upper()} icons generate")
+                log_fn(f"[OK] {store.upper()} icons generated")
 
             finally:
                 os.remove(tmp_path)
