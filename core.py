@@ -2,7 +2,7 @@ import io
 import os
 import re
 import sys
-from PIL import Image
+from PIL import Image, ImageCms
 
 ICON_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256), (512, 512)]
 SUPPORTED_EXT = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp')
@@ -140,9 +140,21 @@ def ritaglia_quadrato(img: Image.Image) -> Image.Image:
 
 
 def salva_ico(img: Image.Image, output_path: str):
-    """Salva l'immagine come file .ico multi-risoluzione."""
-    img = img.convert('RGBA')
-    img.save(output_path, format='ICO', sizes=ICON_SIZES)
+    """Salva l'immagine come file .ico multi-risoluzione.
+    Applica il profilo ICC prima della conversione per preservare i colori originali."""
+    if 'icc_profile' in img.info:
+        try:
+            profilo_src = ImageCms.ImageCmsProfile(io.BytesIO(img.info['icc_profile']))
+            profilo_srgb = ImageCms.createProfile('sRGB')
+            img = ImageCms.profileToProfile(img, profilo_src, profilo_srgb, outputMode='RGBA')
+        except Exception:
+            img = img.convert('RGBA')
+    else:
+        img = img.convert('RGBA')
+
+    # Pre-ridimensiona ogni frame con LANCZOS (migliore qualità per downscaling)
+    frames = [img.resize(s, Image.Resampling.LANCZOS) for s in ICON_SIZES]
+    frames[0].save(output_path, format='ICO', append_images=frames[1:], sizes=ICON_SIZES)
 
 
 def elabora_file(

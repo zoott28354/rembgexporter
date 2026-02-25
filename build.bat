@@ -12,6 +12,7 @@ venv\Scripts\python.exe -m PyInstaller --onefile --windowed --icon=convertICO.ic
   --copy-metadata onnxruntime ^
   --copy-metadata Pillow ^
   --copy-metadata numpy ^
+  --add-data "convertICO.ico;." ^
   app.py
 echo.
 echo Build completata. L'eseguibile si trova in dist\ConvertICO.exe

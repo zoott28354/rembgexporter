@@ -1,9 +1,17 @@
+import ctypes
 import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog
 
 import customtkinter as ctk
+
+
+def _resource_path(nome: str) -> str:
+    """Risolve il percorso di una risorsa sia in modalità script che dentro l'exe PyInstaller."""
+    base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, nome)
 
 from core import elabora_file, SUPPORTED_EXT, MODELLI_REMBG, MODELLO_DEFAULT, DESCRIZIONI_MODELLI
 
@@ -14,7 +22,9 @@ ctk.set_default_color_theme("blue")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('ConvertICO.App')
         self.title("Convertitore Immagini → ICO")
+        self.iconbitmap(_resource_path('convertICO.ico'))
         self.geometry("680x840")
         self.minsize(680, 780)
         self.resizable(True, True)
