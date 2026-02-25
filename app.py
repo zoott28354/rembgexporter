@@ -89,7 +89,7 @@ class App(ctk.CTk):
         self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_format_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
         self.frm_format_opts.grid_columnconfigure(1, weight=1)
-        self.frm_format_opts.grid(remove=True)  # Nascondi inizialmente
+        self.frm_format_opts.grid_remove()  # Nascondi inizialmente
 
         ctk.CTkLabel(self.frm_format_opts, text="Formato:").grid(row=0, column=0, padx=4, sticky="w")
         self.var_formato = tk.StringVar(value="png")
@@ -111,7 +111,7 @@ class App(ctk.CTk):
         # Opzioni app store
         self.frm_appstore_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_appstore_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
-        self.frm_appstore_opts.grid(remove=True)  # Nascondi inizialmente
+        self.frm_appstore_opts.grid_remove()  # Nascondi inizialmente
 
         ctk.CTkLabel(self.frm_appstore_opts, text="Store:").grid(row=0, column=0, padx=4, sticky="w")
         self.var_store = tk.StringVar(value="google")
@@ -294,8 +294,8 @@ class App(ctk.CTk):
         modalita = self.var_modalita.get()
 
         # Nascondi tutte le opzioni
-        self.frm_format_opts.grid(remove=True)
-        self.frm_appstore_opts.grid(remove=True)
+        self.frm_format_opts.grid_remove()
+        self.frm_appstore_opts.grid_remove()
 
         # Mostra opzioni rilevanti
         if modalita == "format":
