@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import re
 import struct
@@ -309,3 +310,220 @@ def elabora_file(
 
     except Exception as e:
         log_fn(f"[ERRORE] {nome}: {e}")
+
+
+# ── NUOVE FEATURE ─────────────────────────────────────────────────────────
+
+def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int, output_dir: str, log_fn):
+    """Converte batch di file tra PNG/JPG/WebP/GIF.
+
+    Args:
+        file_list: Lista di file da convertire
+        formato_dest: 'png', 'jpg', 'webp', 'gif'
+        qualita: 1-100 per qualità compressione
+        output_dir: Cartella output (None = stessa cartella di input)
+        log_fn: Funzione per logging
+    """
+    if not file_list:
+        log_fn("[!] Nessun file in lista.")
+        return
+
+    formato_dest = formato_dest.lower()
+    if formato_dest not in ['png', 'jpg', 'jpeg', 'webp', 'gif']:
+        log_fn(f"[ERRORE] Formato non supportato: {formato_dest}")
+        return
+
+    magick_path = _get_imagemagick_path()
+
+    for i, input_path in enumerate(file_list, 1):
+        nome = os.path.basename(input_path)
+        nome_base = os.path.splitext(nome)[0]
+
+        try:
+            # Determina cartella output
+            cartella_out = output_dir if output_dir else os.path.dirname(input_path)
+
+            # Costruisci percorso output
+            ext_output = '.jpg' if formato_dest == 'jpeg' else f'.{formato_dest}'
+            output_path = _path_univoco(os.path.join(cartella_out, nome_base + ext_output))
+
+            log_fn(f"[...] Conversione {i}/{len(file_list)}: {nome} -> {formato_dest.upper()}")
+
+            # Usa ImageMagick per convertire
+            # Qualità: -quality 80 per jpg/webp
+            cmd = [magick_path, input_path, '-quality', str(qualita), output_path]
+
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            log_fn(f"[OK] Convertito: {os.path.basename(output_path)}")
+
+        except Exception as e:
+            log_fn(f"[ERRORE] {nome}: {e}")
+
+
+def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
+    """Genera favicon completa (ico + png + manifest.json) per ogni file.
+
+    Genera:
+    - favicon.ico (7 frame: 256, 128, 64, 48, 32, 24, 16)
+    - favicon.png (32x32)
+    - favicon-192.png (Android)
+    - favicon-512.png (iOS)
+    - manifest.json (PWA)
+
+    Args:
+        file_list: Lista di file da elaborare
+        output_dir: Cartella output (None = stessa cartella di input)
+        log_fn: Funzione per logging
+    """
+    if not file_list:
+        log_fn("[!] Nessun file in lista.")
+        return
+
+    magick_path = _get_imagemagick_path()
+
+    for i, input_path in enumerate(file_list, 1):
+        nome = os.path.basename(input_path)
+        nome_base = os.path.splitext(nome)[0]
+
+        try:
+            log_fn(f"[...] Favicon {i}/{len(file_list)}: {nome}")
+
+            # Determina cartella output
+            cartella_out = output_dir if output_dir else os.path.dirname(input_path)
+
+            # Carica immagine
+            img = Image.open(input_path)
+            if img.size != (512, 512):
+                img = img.resize((512, 512), Image.Resampling.LANCZOS)
+            img = img.convert('RGBA')
+
+            # Salva come PNG temporaneo
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                tmp_path = tmp.name
+                img.save(tmp_path, 'PNG')
+
+            try:
+                # 1. favicon.ico (7 frame)
+                ico_path = os.path.join(cartella_out, 'favicon.ico')
+                cmd = [magick_path, tmp_path, '-define', 'icon:auto-resize=256,128,64,48,32,24,16', ico_path]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                log_fn(f"  ✓ favicon.ico")
+
+                # 2. favicon.png (32x32)
+                png32_path = os.path.join(cartella_out, 'favicon.png')
+                cmd = [magick_path, tmp_path, '-resize', '32x32', png32_path]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                log_fn(f"  ✓ favicon.png (32x32)")
+
+                # 3. favicon-192.png (Android)
+                png192_path = os.path.join(cartella_out, 'favicon-192.png')
+                cmd = [magick_path, tmp_path, '-resize', '192x192', png192_path]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                log_fn(f"  ✓ favicon-192.png (Android)")
+
+                # 4. favicon-512.png (iOS)
+                png512_path = os.path.join(cartella_out, 'favicon-512.png')
+                cmd = [magick_path, tmp_path, '-resize', '512x512', png512_path]
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                log_fn(f"  ✓ favicon-512.png (iOS)")
+
+                # 5. manifest.json (PWA)
+                manifest = {
+                    "name": nome_base,
+                    "short_name": nome_base[:12],
+                    "icons": [
+                        {"src": "favicon-192.png", "sizes": "192x192", "type": "image/png"},
+                        {"src": "favicon-512.png", "sizes": "512x512", "type": "image/png"}
+                    ],
+                    "theme_color": "#ffffff",
+                    "background_color": "#ffffff",
+                    "display": "standalone"
+                }
+                manifest_path = os.path.join(cartella_out, 'manifest.json')
+                with open(manifest_path, 'w') as f:
+                    json.dump(manifest, f, indent=2)
+                log_fn(f"  ✓ manifest.json (PWA)")
+
+                log_fn(f"[OK] Favicon completa generata")
+
+            finally:
+                os.remove(tmp_path)
+
+        except Exception as e:
+            log_fn(f"[ERRORE] {nome}: {e}")
+
+
+def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: str, log_fn):
+    """Genera icone specifiche per app store (Google Play, Apple, Microsoft).
+
+    Args:
+        file_list: Lista di file da elaborare
+        store: 'google' / 'apple' / 'microsoft'
+        output_dir: Cartella output
+        log_fn: Funzione per logging
+    """
+    if not file_list:
+        log_fn("[!] Nessun file in lista.")
+        return
+
+    store = store.lower()
+
+    # Dimensioni per store
+    store_dims = {
+        'google': [
+            (512, 512, 'play_store_512.png'),
+        ],
+        'apple': [
+            (1024, 1024, 'app_store_1024.png'),
+            (180, 180, 'iphone_180.png'),
+            (167, 167, 'ipad_pro_167.png'),
+            (152, 152, 'ipad_152.png'),
+        ],
+        'microsoft': [
+            (150, 150, 'tile_150.png'),
+            (70, 70, 'tile_70.png'),
+        ]
+    }
+
+    if store not in store_dims:
+        log_fn(f"[ERRORE] Store non supportato: {store}. Usa: google, apple, microsoft")
+        return
+
+    magick_path = _get_imagemagick_path()
+    dimensioni = store_dims[store]
+
+    for i, input_path in enumerate(file_list, 1):
+        nome = os.path.basename(input_path)
+        nome_base = os.path.splitext(nome)[0]
+
+        try:
+            log_fn(f"[...] {store.upper()} Icons {i}/{len(file_list)}: {nome}")
+
+            cartella_out = output_dir if output_dir else os.path.dirname(input_path)
+
+            # Carica immagine
+            img = Image.open(input_path)
+            img = img.convert('RGBA')
+
+            # Salva temporaneo
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                tmp_path = tmp.name
+                if img.size != (512, 512):
+                    img = img.resize((512, 512), Image.Resampling.LANCZOS)
+                img.save(tmp_path, 'PNG')
+
+            try:
+                # Genera ogni dimensione
+                for w, h, nome_file in dimensioni:
+                    output_path = os.path.join(cartella_out, nome_file)
+                    cmd = [magick_path, tmp_path, '-resize', f'{w}x{h}', output_path]
+                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    log_fn(f"  ✓ {nome_file} ({w}x{h})")
+
+                log_fn(f"[OK] {store.upper()} icons generate")
+
+            finally:
+                os.remove(tmp_path)
+
+        except Exception as e:
+            log_fn(f"[ERRORE] {nome}: {e}")
