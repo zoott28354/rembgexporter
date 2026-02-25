@@ -99,9 +99,17 @@ class App(ctk.CTk):
         self.btn_pulisci.pack(side="left")
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
-        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=90)
-        self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="ewns")
+        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=150)
+        self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
         self.scroll_files.grid_columnconfigure(0, weight=1)
+
+        # ── divider trascinabile ──────────────────────────────────────────────
+        self.divider = tk.Frame(frm_lista, height=4, bg="#2a2a2a", cursor="ns_resize")
+        self.divider.grid(row=3, column=0, padx=0, pady=4, sticky="ew")
+        self.divider.bind("<Button-1>", self._start_resize)
+        self.divider.bind("<B1-Motion>", self._on_resize)
+        self.divider.bind("<ButtonRelease-1>", self._stop_resize)
+        self._resize_data = {"y": 0, "original_height": 150}
 
         # ── modalità ──────────────────────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
@@ -348,6 +356,21 @@ class App(ctk.CTk):
             self.entry_dest.configure(state="normal")
             self.entry_dest.delete(0, "end")
             self.entry_dest.insert(0, d)
+
+    def _start_resize(self, event):
+        """Inizia il ridimensionamento del divider."""
+        self._resize_data["y"] = event.y_root
+        self._resize_data["original_height"] = self.scroll_files.cget("height")
+
+    def _on_resize(self, event):
+        """Ridimensiona il box immagini mentre si trascina il divider."""
+        delta = event.y_root - self._resize_data["y"]
+        new_height = max(50, int(self._resize_data["original_height"]) + delta)
+        self.scroll_files.configure(height=new_height)
+
+    def _stop_resize(self, event):
+        """Termina il ridimensionamento."""
+        self._resize_data["original_height"] = self.scroll_files.cget("height")
 
     def _log(self, msg: str):
         self.log_text.configure(state="normal")
