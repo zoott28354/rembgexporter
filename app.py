@@ -13,6 +13,46 @@ def _resource_path(nome: str) -> str:
     base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, nome)
 
+
+class Tooltip:
+    """Crea un tooltip (etichetta popup) al passaggio del mouse."""
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip = None
+        self.widget.bind("<Enter>", self._show_tooltip)
+        self.widget.bind("<Leave>", self._hide_tooltip)
+
+    def _show_tooltip(self, event):
+        """Mostra il tooltip."""
+        if self.tooltip:
+            return
+
+        # Crea una finestra toplevel per il tooltip
+        self.tooltip = tk.Toplevel(self.widget)
+        self.tooltip.wm_overrideredirect(True)
+
+        # Crea label con il testo
+        label = tk.Label(
+            self.tooltip, text=self.text,
+            background="#1a1a1a", foreground="#e0e0e0",
+            relief="solid", borderwidth=1,
+            font=("Arial", 10), padx=8, pady=4
+        )
+        label.pack()
+
+        # Posiziona il tooltip sopra il widget
+        x = event.x_root
+        y = event.y_root - 30
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+
+    def _hide_tooltip(self, event):
+        """Nasconde il tooltip."""
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
+
+
 from core import elabora_file, SUPPORTED_EXT, MODELLI_REMBG, MODELLO_DEFAULT, DESCRIZIONI_MODELLI
 
 ctk.set_appearance_mode("dark")
@@ -47,12 +87,17 @@ class App(ctk.CTk):
 
         btn_row = ctk.CTkFrame(frm_lista, fg_color="transparent")
         btn_row.grid(row=1, column=0, padx=8, pady=(0, 4), sticky="w")
-        ctk.CTkButton(btn_row, text="+ Aggiungi", width=110,
-                      command=self._aggiungi).pack(side="left", padx=(4, 6))
-        ctk.CTkButton(btn_row, text="Pulisci tutto", width=110,
-                      fg_color=("gray70", "gray30"), hover_color=("gray60", "gray25"),
-                      text_color=("gray10", "gray90"),
-                      command=self._pulisci).pack(side="left")
+        self.btn_aggiungi = ctk.CTkButton(btn_row, text="+ Aggiungi", width=110,
+                                           command=self._aggiungi)
+        self.btn_aggiungi.pack(side="left", padx=(4, 6))
+        Tooltip(self.btn_aggiungi, "Seleziona immagini da elaborare\n(PNG, JPG, SVG)")
+
+        self.btn_pulisci = ctk.CTkButton(btn_row, text="Pulisci tutto", width=110,
+                                          fg_color=("gray70", "gray30"), hover_color=("gray60", "gray25"),
+                                          text_color=("gray10", "gray90"),
+                                          command=self._pulisci)
+        self.btn_pulisci.pack(side="left")
+        Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
         self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=140)
         self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="ew")
@@ -72,18 +117,29 @@ class App(ctk.CTk):
         mod_row = ctk.CTkFrame(frm_mod, fg_color="transparent")
         mod_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
 
-        ctk.CTkRadioButton(mod_row, text="Converti ICO",
-                           variable=self.var_modalita, value="ico",
-                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
-        ctk.CTkRadioButton(mod_row, text="Favicon Generator",
-                           variable=self.var_modalita, value="favicon",
-                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
-        ctk.CTkRadioButton(mod_row, text="App Store Icons",
-                           variable=self.var_modalita, value="appstore",
-                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
-        ctk.CTkRadioButton(mod_row, text="Format Conversion",
-                           variable=self.var_modalita, value="format",
-                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
+        self.rad_ico = ctk.CTkRadioButton(mod_row, text="Converti ICO",
+                                           variable=self.var_modalita, value="ico",
+                                           command=self._on_modalita_change)
+        self.rad_ico.pack(side="left", padx=(4, 14))
+        Tooltip(self.rad_ico, "Icone Windows multi-risoluzione\ncon rimozione sfondo AI")
+
+        self.rad_favicon = ctk.CTkRadioButton(mod_row, text="Favicon Generator",
+                                               variable=self.var_modalita, value="favicon",
+                                               command=self._on_modalita_change)
+        self.rad_favicon.pack(side="left", padx=(4, 14))
+        Tooltip(self.rad_favicon, "Favicon web complete\n(ICO + PNG + manifest.json)")
+
+        self.rad_appstore = ctk.CTkRadioButton(mod_row, text="App Store Icons",
+                                                variable=self.var_modalita, value="appstore",
+                                                command=self._on_modalita_change)
+        self.rad_appstore.pack(side="left", padx=(4, 14))
+        Tooltip(self.rad_appstore, "Icone per Google Play,\nApple Store, Microsoft Store")
+
+        self.rad_format = ctk.CTkRadioButton(mod_row, text="Format Conversion",
+                                              variable=self.var_modalita, value="format",
+                                              command=self._on_modalita_change)
+        self.rad_format.pack(side="left", padx=(4, 14))
+        Tooltip(self.rad_format, "Converte batch tra formati\n(PNG, JPG, WebP, GIF)")
 
         # ── opzioni contestuali per modalità ──────────────────────────────────
         self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
@@ -97,6 +153,7 @@ class App(ctk.CTk):
             self.frm_format_opts, variable=self.var_formato,
             values=["PNG", "JPG", "WebP", "GIF"], width=100)
         self.om_formato.grid(row=0, column=1, padx=(4, 14), sticky="ew")
+        Tooltip(self.om_formato, "Formato di output per la conversione")
 
         ctk.CTkLabel(self.frm_format_opts, text="Qualità:").grid(row=0, column=2, padx=4, sticky="w")
         self.var_qualita = tk.IntVar(value=85)
@@ -104,6 +161,7 @@ class App(ctk.CTk):
             self.frm_format_opts, from_=1, to=100, variable=self.var_qualita,
             number_of_steps=99, width=150)
         self.slider_qualita.grid(row=0, column=3, padx=(4, 10), sticky="ew")
+        Tooltip(self.slider_qualita, "1 = veloce/pesante\n100 = lento/leggero")
         self.lbl_qualita = ctk.CTkLabel(self.frm_format_opts, text="85", width=30)
         self.lbl_qualita.grid(row=0, column=4, sticky="w")
         self.slider_qualita.configure(command=lambda v: self.lbl_qualita.configure(text=str(int(float(v)))))
@@ -119,6 +177,7 @@ class App(ctk.CTk):
             self.frm_appstore_opts, variable=self.var_store,
             values=["Google Play", "Apple App Store", "Microsoft Store"], width=150)
         self.om_store.grid(row=0, column=1, padx=4, sticky="ew")
+        Tooltip(self.om_store, "Scegli lo store per le dimensioni icone")
 
         # ── operazioni (spostate) ─────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
@@ -143,9 +202,11 @@ class App(ctk.CTk):
         bg_row = ctk.CTkFrame(frm_op, fg_color="transparent")
         bg_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
 
-        ctk.CTkCheckBox(bg_row, text="1. Rimuovi sfondo",
-                        variable=self.var_bg,
-                        command=self._toggle_modello).pack(side="left", padx=(4, 14))
+        self.chk_bg = ctk.CTkCheckBox(bg_row, text="1. Rimuovi sfondo",
+                                       variable=self.var_bg,
+                                       command=self._toggle_modello)
+        self.chk_bg.pack(side="left", padx=(4, 14))
+        Tooltip(self.chk_bg, "Usa AI (rembg) per rimuovere lo sfondo")
 
         ctk.CTkLabel(bg_row, text="Modello:").pack(side="left")
 
@@ -154,6 +215,7 @@ class App(ctk.CTk):
             values=MODELLI_REMBG, width=210,
             command=self._aggiorna_desc_modello)
         self.om_modello.pack(side="left", padx=(6, 10))
+        Tooltip(self.om_modello, "Scegli il modello AI per rimozione sfondo")
 
         self.lbl_desc = ctk.CTkLabel(
             bg_row, text=DESCRIZIONI_MODELLI[MODELLO_DEFAULT],
@@ -161,13 +223,15 @@ class App(ctk.CTk):
             font=ctk.CTkFont(size=11))
         self.lbl_desc.pack(side="left")
 
-        ctk.CTkCheckBox(frm_op, text="2. Ritaglia a quadrato",
-                        variable=self.var_sq).grid(
-            row=2, column=0, padx=12, pady=3, sticky="w")
+        self.chk_sq = ctk.CTkCheckBox(frm_op, text="2. Ritaglia a quadrato",
+                                       variable=self.var_sq)
+        self.chk_sq.grid(row=2, column=0, padx=12, pady=3, sticky="w")
+        Tooltip(self.chk_sq, "Centra l'immagine su sfondo trasparente quadrato")
 
-        ctk.CTkCheckBox(frm_op, text="3. Converti in ICO  (altrimenti salva PNG)",
-                        variable=self.var_ico).grid(
-            row=3, column=0, padx=12, pady=(3, 10), sticky="w")
+        self.chk_ico = ctk.CTkCheckBox(frm_op, text="3. Converti in ICO  (altrimenti salva PNG)",
+                                        variable=self.var_ico)
+        self.chk_ico.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
+        Tooltip(self.chk_ico, "Converti in ICO multi-frame\n(Se no, salva solo PNG)")
 
         ctk.CTkLabel(frm_out, text="Destinazione output",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -195,6 +259,7 @@ class App(ctk.CTk):
                                          state="disabled", width=90,
                                          command=self._scegli_dest)
         self.btn_scegli.grid(row=0, column=2, padx=(0, 4))
+        Tooltip(self.btn_scegli, "Seleziona la cartella di output")
 
         # ── processa ──────────────────────────────────────────────────────────
         self.btn_processa = ctk.CTkButton(
@@ -202,6 +267,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
         self.btn_processa.grid(row=4, column=0, padx=12, pady=(8, 4), sticky="ew")
+        Tooltip(self.btn_processa, "Avvia l'elaborazione dei file selezionati")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
