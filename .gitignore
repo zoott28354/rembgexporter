@@ -1,0 +1,28 @@
+# Ambiente virtuale
+venv/
+
+# Generato da setup.bat
+lancia.bat
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Cartella immagini temporanee
+asset/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
