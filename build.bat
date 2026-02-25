@@ -17,7 +17,7 @@ venv\Scripts\python.exe -m PyInstaller --onefile --windowed --icon=convertICO.ic
   --hidden-import=pycparser.lextab ^
   --hidden-import=pycparser.yacctab ^
   --add-data "convertICO.ico;." ^
-  --add-data "ImageMagick-7.1.2-portable;imagemagick" ^
+  --add-data "third-party/imagemagick;imagemagick" ^
   app.py
 echo.
 echo Build completata. L'eseguibile si trova in dist\ConvertICO.exe

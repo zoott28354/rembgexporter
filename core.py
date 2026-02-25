@@ -171,10 +171,11 @@ def _render_svg_to_png(svg_path: str) -> Image.Image:
 
 def _get_imagemagick_path():
     """Trova il percorso dell'eseguibile ImageMagick (portable o system)."""
-    # 1. Prova cartella portable nel progetto
+    # 1. Prova cartella third-party/imagemagick nel progetto
+    base_dir = os.path.dirname(__file__)
     portable_paths = [
-        os.path.join(os.path.dirname(__file__), 'ImageMagick-7.1.2-portable', 'magick.exe'),
-        os.path.join(os.path.dirname(__file__), '..', 'ImageMagick-7.1.2-portable', 'magick.exe'),
+        os.path.join(base_dir, 'third-party', 'imagemagick', 'magick.exe'),
+        os.path.join(base_dir, '..', 'third-party', 'imagemagick', 'magick.exe'),
     ]
     for path in portable_paths:
         if os.path.exists(path):
@@ -195,7 +196,7 @@ def _get_imagemagick_path():
 
     raise FileNotFoundError(
         "ImageMagick non trovato! Assicurati di:\n"
-        "1. Copiare la cartella 'ImageMagick-7.1.2-portable' nella root del progetto\n"
+        "1. Estrarre il file .7z in 'third-party/imagemagick/'\n"
         "2. O installare ImageMagick globalmente"
     )
 
