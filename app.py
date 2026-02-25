@@ -125,6 +125,11 @@ class App(ctk.CTk):
         frm_op.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
+        # ── output ────────────────────────────────────────────────────────────
+        frm_out = ctk.CTkFrame(self)
+        frm_out.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
+        frm_out.grid_columnconfigure(1, weight=1)
+
         ctk.CTkLabel(frm_op, text="Operazioni",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
             row=0, column=0, padx=12, pady=(10, 4), sticky="w")
@@ -164,11 +169,6 @@ class App(ctk.CTk):
                         variable=self.var_ico).grid(
             row=3, column=0, padx=12, pady=(3, 10), sticky="w")
 
-        # ── output ────────────────────────────────────────────────────────────
-        frm_out = ctk.CTkFrame(self)
-        frm_out.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
-        frm_out.grid_columnconfigure(1, weight=1)
-
         ctk.CTkLabel(frm_out, text="Destinazione output",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
             row=0, column=0, columnspan=3, padx=12, pady=(10, 4), sticky="w")
@@ -201,18 +201,18 @@ class App(ctk.CTk):
             self, text="PROCESSA", height=44,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
-        self.btn_processa.grid(row=3, column=0, padx=12, pady=(8, 4), sticky="ew")
+        self.btn_processa.grid(row=4, column=0, padx=12, pady=(8, 4), sticky="ew")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
-        self.progress.grid(row=4, column=0, padx=12, pady=(0, 6), sticky="ew")
+        self.progress.grid(row=5, column=0, padx=12, pady=(0, 6), sticky="ew")
 
         # ── log ───────────────────────────────────────────────────────────────
         frm_log = ctk.CTkFrame(self)
-        frm_log.grid(row=5, column=0, padx=12, pady=(0, 12), sticky="nsew")
+        frm_log.grid(row=6, column=0, padx=12, pady=(0, 12), sticky="nsew")
         frm_log.grid_columnconfigure(0, weight=1)
         frm_log.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_rowconfigure(6, weight=1)
 
         ctk.CTkLabel(frm_log, text="Log",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
