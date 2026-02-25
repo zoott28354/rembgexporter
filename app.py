@@ -99,8 +99,8 @@ class App(ctk.CTk):
         self.btn_pulisci.pack(side="left")
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
-        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=140)
-        self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="ew")
+        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=90)
+        self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="ewns")
         self.scroll_files.grid_columnconfigure(0, weight=1)
 
         # ── modalità ──────────────────────────────────────────────────────────
