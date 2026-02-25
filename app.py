@@ -103,13 +103,23 @@ class App(ctk.CTk):
         self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
         self.scroll_files.grid_columnconfigure(0, weight=1)
 
-        # ── divider trascinabile (NELLA FINESTRA PRINCIPALE) ──────────────────
-        self.divider = tk.Frame(self, height=8, bg="#444444", relief="raised", bd=1, cursor="sb_v_double_arrow")
-        self.divider.grid(row=1, column=0, padx=0, pady=4, sticky="ew")
-        self.divider.bind("<Button-1>", self._start_resize)
-        self.divider.bind("<B1-Motion>", self._on_resize)
-        self.divider.bind("<ButtonRelease-1>", self._stop_resize)
-        self._resize_data = {"y": 0, "original_height": 150}
+        # ── slider controllo altezza immagini (NELLA FINESTRA PRINCIPALE) ──────
+        frm_slider = ctk.CTkFrame(self, fg_color="transparent")
+        frm_slider.grid(row=1, column=0, padx=12, pady=(2, 4), sticky="ew")
+        frm_slider.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(frm_slider, text="Immagini:", font=ctk.CTkFont(size=11)).grid(
+            row=0, column=0, padx=(0, 8), sticky="w")
+
+        self.slider_altezza = ctk.CTkSlider(
+            frm_slider, from_=50, to=300, number_of_steps=50,
+            command=self._on_altezza_change)
+        self.slider_altezza.set(150)
+        self.slider_altezza.grid(row=0, column=1, padx=(0, 8), sticky="ew")
+
+        self.lbl_altezza = ctk.CTkLabel(frm_slider, text="150px", width=50)
+        self.lbl_altezza.grid(row=0, column=2, sticky="w")
+        Tooltip(self.slider_altezza, "Regola l'altezza del box immagini\n(50-300px)")
 
         # ── modalità ──────────────────────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
@@ -357,21 +367,11 @@ class App(ctk.CTk):
             self.entry_dest.delete(0, "end")
             self.entry_dest.insert(0, d)
 
-    def _start_resize(self, event):
-        """Inizia il ridimensionamento del divider."""
-        self._resize_data["y"] = event.y_root
-        self._resize_data["original_height"] = self.scroll_files.cget("height")
-
-    def _on_resize(self, event):
-        """Ridimensiona il box immagini mentre si trascina il divider."""
-        # Delta invertito: trascinare VERSO L'ALTO riduce l'altezza
-        delta = self._resize_data["y"] - event.y_root
-        new_height = max(50, int(self._resize_data["original_height"]) + delta)
+    def _on_altezza_change(self, value):
+        """Aggiorna l'altezza del box immagini quando lo slider cambia."""
+        new_height = int(float(value))
         self.scroll_files.configure(height=new_height)
-
-    def _stop_resize(self, event):
-        """Termina il ridimensionamento."""
-        self._resize_data["original_height"] = self.scroll_files.cget("height")
+        self.lbl_altezza.configure(text=f"{new_height}px")
 
     def _log(self, msg: str):
         self.log_text.configure(state="normal")
