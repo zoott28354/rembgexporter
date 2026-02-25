@@ -251,9 +251,7 @@ def elabora_file(
     nome_base = os.path.splitext(nome)[0]
 
     try:
-        img = Image.open(input_path)
-
-        # Renderizza SVG a PNG se necessario
+        # Renderizza SVG a PNG se necessario (prima di Image.open)
         if ext.lower() == '.svg':
             try:
                 log_fn(f"[...] Rendering SVG: {nome}")
@@ -262,6 +260,8 @@ def elabora_file(
             except Exception as e:
                 log_fn(f"[ERRORE] Rendering SVG fallito: {e}")
                 return
+        else:
+            img = Image.open(input_path)
 
         if rimuovi_bg:
             log_fn(f"[...] Rimozione sfondo [{modello}]: {nome}")
