@@ -116,9 +116,20 @@ class App(ctk.CTk):
         canvas.config(scrollregion=canvas.bbox("all"))
         self.scroll_files.bind("<Configure>", lambda e: canvas.config(scrollregion=canvas.bbox("all")))
 
+        # Salva riferimento al canvas per il divider
+        self.canvas_files = canvas
+
+        # ── divider trascinabile ──────────────────────────────────────────────
+        self.divider = tk.Frame(self, height=6, bg="#444444", relief="raised", bd=1, cursor="sb_v_double_arrow")
+        self.divider.grid(row=1, column=0, padx=0, pady=4, sticky="ew")
+        self.divider.bind("<Button-1>", self._start_resize_divider)
+        self.divider.bind("<B1-Motion>", self._on_resize_divider)
+        self.divider.bind("<ButtonRelease-1>", self._stop_resize_divider)
+        self._divider_data = {"y": 0, "original_height": 10}
+
         # ── modalità ──────────────────────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
-        frm_mod.grid(row=1, column=0, padx=12, pady=6, sticky="ew")
+        frm_mod.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
         frm_mod.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(frm_mod, text="Modalità",
@@ -194,12 +205,12 @@ class App(ctk.CTk):
 
         # ── operazioni (spostate) ─────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
-        frm_op.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
+        frm_op.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
         # ── output ────────────────────────────────────────────────────────────
         frm_out = ctk.CTkFrame(self)
-        frm_out.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
+        frm_out.grid(row=4, column=0, padx=12, pady=6, sticky="ew")
         frm_out.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(frm_op, text="Operazioni",
@@ -279,19 +290,19 @@ class App(ctk.CTk):
             self, text="PROCESSA", height=44,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
-        self.btn_processa.grid(row=4, column=0, padx=12, pady=(8, 4), sticky="ew")
+        self.btn_processa.grid(row=5, column=0, padx=12, pady=(8, 4), sticky="ew")
         Tooltip(self.btn_processa, "Avvia l'elaborazione dei file selezionati")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
-        self.progress.grid(row=5, column=0, padx=12, pady=(0, 6), sticky="ew")
+        self.progress.grid(row=6, column=0, padx=12, pady=(0, 6), sticky="ew")
 
         # ── log ───────────────────────────────────────────────────────────────
         frm_log = ctk.CTkFrame(self)
-        frm_log.grid(row=6, column=0, padx=12, pady=(0, 12), sticky="nsew")
+        frm_log.grid(row=7, column=0, padx=12, pady=(0, 12), sticky="nsew")
         frm_log.grid_columnconfigure(0, weight=1)
         frm_log.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(6, weight=1)
+        self.grid_rowconfigure(7, weight=1)
 
         ctk.CTkLabel(frm_log, text="Log",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -361,6 +372,21 @@ class App(ctk.CTk):
             self.entry_dest.configure(state="normal")
             self.entry_dest.delete(0, "end")
             self.entry_dest.insert(0, d)
+
+    def _start_resize_divider(self, event):
+        """Inizia il trascinamento del divider."""
+        self._divider_data["y"] = event.y_root
+        self._divider_data["original_height"] = self.canvas_files.cget("height")
+
+    def _on_resize_divider(self, event):
+        """Ridimensiona il canvas mentre si trascina il divider (verso l'alto riduce)."""
+        delta = self._divider_data["y"] - event.y_root
+        new_height = max(10, int(self._divider_data["original_height"]) + delta)
+        self.canvas_files.configure(height=new_height)
+
+    def _stop_resize_divider(self, event):
+        """Termina il trascinamento."""
+        self._divider_data["original_height"] = self.canvas_files.cget("height")
 
     def _log(self, msg: str):
         self.log_text.configure(state="normal")
