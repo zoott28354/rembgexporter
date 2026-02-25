@@ -99,31 +99,13 @@ class App(ctk.CTk):
         self.btn_pulisci.pack(side="left")
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
-        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=150)
+        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=50)
         self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
         self.scroll_files.grid_columnconfigure(0, weight=1)
 
-        # ── slider controllo altezza immagini (NELLA FINESTRA PRINCIPALE) ──────
-        frm_slider = ctk.CTkFrame(self, fg_color="transparent")
-        frm_slider.grid(row=1, column=0, padx=12, pady=(2, 4), sticky="ew")
-        frm_slider.grid_columnconfigure(1, weight=1)
-
-        ctk.CTkLabel(frm_slider, text="Immagini:", font=ctk.CTkFont(size=11)).grid(
-            row=0, column=0, padx=(0, 8), sticky="w")
-
-        self.slider_altezza = ctk.CTkSlider(
-            frm_slider, from_=50, to=300, number_of_steps=50,
-            command=self._on_altezza_change)
-        self.slider_altezza.set(150)
-        self.slider_altezza.grid(row=0, column=1, padx=(0, 8), sticky="ew")
-
-        self.lbl_altezza = ctk.CTkLabel(frm_slider, text="150px", width=50)
-        self.lbl_altezza.grid(row=0, column=2, sticky="w")
-        Tooltip(self.slider_altezza, "Regola l'altezza del box immagini\n(50-300px)")
-
         # ── modalità ──────────────────────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
-        frm_mod.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
+        frm_mod.grid(row=1, column=0, padx=12, pady=6, sticky="ew")
         frm_mod.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(frm_mod, text="Modalità",
@@ -199,12 +181,12 @@ class App(ctk.CTk):
 
         # ── operazioni (spostate) ─────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
-        frm_op.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
+        frm_op.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
         # ── output ────────────────────────────────────────────────────────────
         frm_out = ctk.CTkFrame(self)
-        frm_out.grid(row=4, column=0, padx=12, pady=6, sticky="ew")
+        frm_out.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
         frm_out.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(frm_op, text="Operazioni",
@@ -284,19 +266,19 @@ class App(ctk.CTk):
             self, text="PROCESSA", height=44,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
-        self.btn_processa.grid(row=5, column=0, padx=12, pady=(8, 4), sticky="ew")
+        self.btn_processa.grid(row=4, column=0, padx=12, pady=(8, 4), sticky="ew")
         Tooltip(self.btn_processa, "Avvia l'elaborazione dei file selezionati")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
-        self.progress.grid(row=6, column=0, padx=12, pady=(0, 6), sticky="ew")
+        self.progress.grid(row=5, column=0, padx=12, pady=(0, 6), sticky="ew")
 
         # ── log ───────────────────────────────────────────────────────────────
         frm_log = ctk.CTkFrame(self)
-        frm_log.grid(row=7, column=0, padx=12, pady=(0, 12), sticky="nsew")
+        frm_log.grid(row=6, column=0, padx=12, pady=(0, 12), sticky="nsew")
         frm_log.grid_columnconfigure(0, weight=1)
         frm_log.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(7, weight=1)
+        self.grid_rowconfigure(6, weight=1)
 
         ctk.CTkLabel(frm_log, text="Log",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -366,12 +348,6 @@ class App(ctk.CTk):
             self.entry_dest.configure(state="normal")
             self.entry_dest.delete(0, "end")
             self.entry_dest.insert(0, d)
-
-    def _on_altezza_change(self, value):
-        """Aggiorna l'altezza del box immagini quando lo slider cambia."""
-        new_height = int(float(value))
-        self.scroll_files.configure(height=new_height)
-        self.lbl_altezza.configure(text=f"{new_height}px")
 
     def _log(self, msg: str):
         self.log_text.configure(state="normal")
