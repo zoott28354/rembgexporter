@@ -3,6 +3,8 @@ import os
 import re
 import struct
 import sys
+import subprocess
+import tempfile
 from PIL import Image, ImageCms
 
 ICON_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
@@ -167,14 +169,45 @@ def _render_svg_to_png(svg_path: str) -> Image.Image:
     return img
 
 
+def _get_imagemagick_path():
+    """Trova il percorso dell'eseguibile ImageMagick (portable o system)."""
+    # 1. Prova cartella portable nel progetto
+    portable_paths = [
+        os.path.join(os.path.dirname(__file__), 'ImageMagick-7.1.2-portable', 'magick.exe'),
+        os.path.join(os.path.dirname(__file__), '..', 'ImageMagick-7.1.2-portable', 'magick.exe'),
+    ]
+    for path in portable_paths:
+        if os.path.exists(path):
+            return path
+
+    # 2. Prova cartella imagemagick nel dist (PyInstaller)
+    if getattr(sys, 'frozen', False):  # Se eseguito via PyInstaller
+        dist_path = os.path.join(sys._MEIPASS, 'imagemagick', 'magick.exe')
+        if os.path.exists(dist_path):
+            return dist_path
+
+    # 3. Prova system PATH
+    try:
+        subprocess.run(['magick', '--version'], capture_output=True, check=True)
+        return 'magick'
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    raise FileNotFoundError(
+        "ImageMagick non trovato! Assicurati di:\n"
+        "1. Copiare la cartella 'ImageMagick-7.1.2-portable' nella root del progetto\n"
+        "2. O installare ImageMagick globalmente"
+    )
+
+
 def salva_ico(img: Image.Image, output_path: str):
-    """Salva l'immagine come file .ico multi-risoluzione (BMP + PNG come daddy.ico).
+    """Crea ICO multi-frame perfetta usando ImageMagick.
 
-    Frame < 128: salvati come DIB/BMP (formato nativo Windows, no PNG header).
-    Frame >= 128: salvati come PNG compresso (migliore compressione, supporto Vista+).
-
-    Windows sceglie il primo frame BMP grande disponibile, quindi con questa
-    struttura mostrerà 128×128 come risoluzione principale (non 16×16).
+    Flusso:
+    1. Converti immagine a RGBA
+    2. Ridimensiona a 512×512
+    3. Salva come PNG temporaneo
+    4. ImageMagick crea ICO con 7 frame: 256, 128, 64, 48, 32, 24, 16
     """
     # 1. Converti al profilo colore sRGB per preservare i colori originali
     if 'icc_profile' in img.info:
@@ -187,45 +220,35 @@ def salva_ico(img: Image.Image, output_path: str):
     else:
         img = img.convert('RGBA')
 
-    # 2. Ridimensiona ogni frame con LANCZOS e serializza come BMP/PNG in memoria
-    frames_data = []
-    for w, h in ICON_SIZES:
-        frame = img.resize((w, h), Image.Resampling.LANCZOS)
-        buf = io.BytesIO()
-        # BMP per frame piccoli, PNG per frame grandi (come daddy.ico)
-        if w < 128:
-            frame.save(buf, format='dib')  # DIB = BMP senza header (formato ICO)
-        else:
-            frame.save(buf, format='PNG')
-        frames_data.append((w, h, buf.getvalue()))
+    # 2. Ridimensiona a 512×512 per qualità massima
+    if img.size != (512, 512):
+        img = img.resize((512, 512), Image.Resampling.LANCZOS)
 
-    # 3. Scrittura manuale del file ICO
-    #    Layout: ICONDIR(6) + N × ICONDIRENTRY(16) + N × PNG_bytes
-    n = len(frames_data)
-    header_size = 6 + n * 16        # offset del primo frame data
+    # 3. Salva come PNG temporaneo
+    tmp_png = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+            tmp_png = tmp.name
+            img.save(tmp_png, 'PNG')
 
-    with open(output_path, 'wb') as f:
-        # ICONDIR: idReserved=0, idType=1 (ICO), idCount=n
-        f.write(struct.pack('<HHH', 0, 1, n))
+        # 4. Chiama ImageMagick per creare ICO multi-frame
+        magick_path = _get_imagemagick_path()
+        cmd = [
+            magick_path,
+            tmp_png,
+            '-define', 'icon:auto-resize=256,128,64,48,32,24,16',
+            output_path
+        ]
 
-        # ICONDIRENTRY per ogni frame (16 byte ciascuna)
-        offset = header_size
-        for w, h, data in frames_data:
-            f.write(struct.pack('<BBBBHHII',
-                w if w < 256 else 0,   # bWidth  (0 ≡ 256; stessa convenzione per 512)
-                h if h < 256 else 0,   # bHeight
-                0,                     # bColorCount (0 = nessuna palette, true color)
-                0,                     # bReserved
-                0,                     # wPlanes
-                32,                    # wBitCount (32 bpp RGBA)
-                len(data),             # dwBytesInRes
-                offset,                # dwImageOffset dall'inizio del file
-            ))
-            offset += len(data)
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        # Dati PNG di ogni frame
-        for _, _, data in frames_data:
-            f.write(data)
+    finally:
+        # Pulisci file temporaneo
+        if tmp_png and os.path.exists(tmp_png):
+            try:
+                os.remove(tmp_png)
+            except Exception:
+                pass
 
 
 def elabora_file(
