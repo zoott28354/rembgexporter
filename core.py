@@ -142,15 +142,24 @@ def ritaglia_quadrato(img: Image.Image) -> Image.Image:
 
 def _render_svg_to_png(svg_path: str) -> Image.Image:
     """Renderizza SVG a PNG 512×512 RGBA ad alta qualità."""
-    import cairosvg
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPM
     import tempfile
 
-    # Renderizza SVG → PNG temporaneo
+    # Carica SVG con svglib
+    drawing = svg2rlg(svg_path)
+    if drawing is None:
+        raise ValueError(f"Impossibile caricare SVG: {svg_path}")
+
+    # Renderizza a PNG ad alta risoluzione (2× target per qualità maggiore)
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
         tmp_path = tmp.name
 
-    cairosvg.svg2png(url=svg_path, write_to=tmp_path, output_width=512, output_height=512)
+    renderPM.drawToFile(drawing, tmp_path, fmt='PNG', width=1024, height=1024)
     img = Image.open(tmp_path).convert('RGBA')
+
+    # Ridimensiona a 512×512 con LANCZOS
+    img = img.resize((512, 512), Image.Resampling.LANCZOS)
 
     # Cleanup
     os.remove(tmp_path)

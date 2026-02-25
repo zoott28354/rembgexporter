@@ -3,4 +3,5 @@ rembg
 onnxruntime
 pyinstaller
 customtkinter
-cairosvg
+svglib
+reportlab
