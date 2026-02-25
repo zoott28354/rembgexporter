@@ -6,7 +6,7 @@ import sys
 from PIL import Image, ImageCms
 
 ICON_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
-SUPPORTED_EXT = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp')
+SUPPORTED_EXT = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.svg')
 
 
 MODELLI_REMBG = [
@@ -140,6 +140,24 @@ def ritaglia_quadrato(img: Image.Image) -> Image.Image:
     return nuovo
 
 
+def _render_svg_to_png(svg_path: str) -> Image.Image:
+    """Renderizza SVG a PNG 512×512 RGBA ad alta qualità."""
+    import cairosvg
+    import tempfile
+
+    # Renderizza SVG → PNG temporaneo
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+        tmp_path = tmp.name
+
+    cairosvg.svg2png(url=svg_path, write_to=tmp_path, output_width=512, output_height=512)
+    img = Image.open(tmp_path).convert('RGBA')
+
+    # Cleanup
+    os.remove(tmp_path)
+
+    return img
+
+
 def salva_ico(img: Image.Image, output_path: str):
     """Salva l'immagine come file .ico multi-risoluzione (PNG-in-ICO, Windows Vista+).
 
@@ -225,6 +243,16 @@ def elabora_file(
 
     try:
         img = Image.open(input_path)
+
+        # Renderizza SVG a PNG se necessario
+        if ext.lower() == '.svg':
+            try:
+                log_fn(f"[...] Rendering SVG: {nome}")
+                img = _render_svg_to_png(input_path)
+                log_fn(f"[OK] SVG renderizzato a PNG 512×512")
+            except Exception as e:
+                log_fn(f"[ERRORE] Rendering SVG fallito: {e}")
+                return
 
         if rimuovi_bg:
             log_fn(f"[...] Rimozione sfondo [{modello}]: {nome}")
