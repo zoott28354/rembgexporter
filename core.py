@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import struct
 import sys
 from PIL import Image, ImageCms
 
@@ -140,8 +141,14 @@ def ritaglia_quadrato(img: Image.Image) -> Image.Image:
 
 
 def salva_ico(img: Image.Image, output_path: str):
-    """Salva l'immagine come file .ico multi-risoluzione.
-    Applica il profilo ICC prima della conversione per preservare i colori originali."""
+    """Salva l'immagine come file .ico multi-risoluzione (PNG-in-ICO, Windows Vista+).
+
+    Pillow non supporta dimensioni > 256 nel suo saver ICO e scarta silenziosamente
+    tutti i frame se l'immagine principale è piccola (es. 16×16).
+    Scriviamo il file ICO manualmente per includere tutti gli 8 frame
+    da 16×16 fino a 512×512, ciascuno salvato come PNG compresso.
+    """
+    # 1. Converti al profilo colore sRGB per preservare i colori originali
     if 'icc_profile' in img.info:
         try:
             profilo_src = ImageCms.ImageCmsProfile(io.BytesIO(img.info['icc_profile']))
@@ -152,9 +159,41 @@ def salva_ico(img: Image.Image, output_path: str):
     else:
         img = img.convert('RGBA')
 
-    # Pre-ridimensiona ogni frame con LANCZOS (migliore qualità per downscaling)
-    frames = [img.resize(s, Image.Resampling.LANCZOS) for s in ICON_SIZES]
-    frames[0].save(output_path, format='ICO', append_images=frames[1:], sizes=ICON_SIZES)
+    # 2. Ridimensiona ogni frame con LANCZOS e serializza come PNG in memoria
+    frames_data = []
+    for w, h in ICON_SIZES:
+        frame = img.resize((w, h), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        frame.save(buf, format='PNG')
+        frames_data.append((w, h, buf.getvalue()))
+
+    # 3. Scrittura manuale del file ICO
+    #    Layout: ICONDIR(6) + N × ICONDIRENTRY(16) + N × PNG_bytes
+    n = len(frames_data)
+    header_size = 6 + n * 16        # offset del primo frame data
+
+    with open(output_path, 'wb') as f:
+        # ICONDIR: idReserved=0, idType=1 (ICO), idCount=n
+        f.write(struct.pack('<HHH', 0, 1, n))
+
+        # ICONDIRENTRY per ogni frame (16 byte ciascuna)
+        offset = header_size
+        for w, h, data in frames_data:
+            f.write(struct.pack('<BBBBHHII',
+                w if w < 256 else 0,   # bWidth  (0 ≡ 256; stessa convenzione per 512)
+                h if h < 256 else 0,   # bHeight
+                0,                     # bColorCount (0 = nessuna palette, true color)
+                0,                     # bReserved
+                0,                     # wPlanes
+                32,                    # wBitCount (32 bpp RGBA)
+                len(data),             # dwBytesInRes
+                offset,                # dwImageOffset dall'inizio del file
+            ))
+            offset += len(data)
+
+        # Dati PNG di ogni frame
+        for _, _, data in frames_data:
+            f.write(data)
 
 
 def elabora_file(
