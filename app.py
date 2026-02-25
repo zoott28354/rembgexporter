@@ -99,9 +99,22 @@ class App(ctk.CTk):
         self.btn_pulisci.pack(side="left")
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
-        self.scroll_files = ctk.CTkScrollableFrame(frm_lista, height=10)
-        self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
-        self.scroll_files.grid_columnconfigure(0, weight=1)
+        # Canvas + scrollbar per altezza minima controllabile
+        scroll_row = ctk.CTkFrame(frm_lista, fg_color="transparent")
+        scroll_row.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
+        scroll_row.grid_columnconfigure(0, weight=1)
+
+        canvas = tk.Canvas(scroll_row, height=10, bg="#212121", highlightthickness=0)
+        canvas.grid(row=0, column=0, sticky="ewns")
+
+        scrollbar = tk.Scrollbar(scroll_row, orient="vertical", command=canvas.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        self.scroll_files = tk.Frame(canvas, bg="#212121")
+        canvas.create_window(0, 0, window=self.scroll_files, anchor="nw")
+        canvas.config(scrollregion=canvas.bbox("all"))
+        self.scroll_files.bind("<Configure>", lambda e: canvas.config(scrollregion=canvas.bbox("all")))
 
         # ── modalità ──────────────────────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
