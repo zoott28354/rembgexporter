@@ -104,8 +104,8 @@ class App(ctk.CTk):
         self.scroll_files.grid_columnconfigure(0, weight=1)
 
         # ── divider trascinabile (NELLA FINESTRA PRINCIPALE) ──────────────────
-        self.divider = tk.Frame(self, height=4, bg="#2a2a2a", cursor="sb_v_double_arrow")
-        self.divider.grid(row=1, column=0, padx=0, pady=0, sticky="ew")
+        self.divider = tk.Frame(self, height=8, bg="#444444", relief="raised", bd=1, cursor="sb_v_double_arrow")
+        self.divider.grid(row=1, column=0, padx=0, pady=4, sticky="ew")
         self.divider.bind("<Button-1>", self._start_resize)
         self.divider.bind("<B1-Motion>", self._on_resize)
         self.divider.bind("<ButtonRelease-1>", self._stop_resize)
