@@ -28,18 +28,40 @@ Sono disponibili **6 modelli** selezionabili dalla GUI:
 
 Centra l'immagine su uno sfondo trasparente quadrato, evitando distorsioni nella conversione ICO.
 
-### 3. Conversione ICO multi-risoluzione
+### 3. Conversione ICO multi-risoluzione — powered by [ImageMagick](https://imagemagick.org)
 
-Genera un file `.ico` che contiene tutte le dimensioni standard Windows in un unico file:
+Genera un file `.ico` perfetto che contiene tutte le dimensioni standard Windows in un unico file:
 
-`16 · 24 · 32 · 48 · 64 · 128 · 256 · 512 px`
+`16 · 24 · 32 · 48 · 64 · 128 · 256 px`
 
-I frame fino a 256 px sono in formato BMP; il 512 px viene salvato come PNG compresso nel container ICO (Windows Vista+).
+Utilizza **ImageMagick** per creare ICO multi-frame corrette che Windows visualizza perfettamente (256×256 come dimensione primaria). Ogni frame è ottimizzato in PNG compresso.
 
 ### Output per ogni immagine elaborata
 
 - `nomefile_nobg.png` — PNG con sfondo trasparente (se rimozione sfondo attiva)
 - `nomefile.ico` — icona multi-risoluzione (se conversione ICO attiva)
+
+---
+
+## Struttura del progetto
+
+```
+script-per-convertire-immagini-in-ico/
+├── app.py                          # Interfaccia GUI (Tkinter)
+├── core.py                         # Pipeline elaborazione immagini
+├── build.bat                       # Build exe con PyInstaller
+├── setup.bat                       # Setup venv e dipendenze
+├── lancia.bat                      # Avvio app (generato da setup)
+├── requirements.txt                # Dipendenze Python
+│
+├── third-party/
+│   └── imagemagick/                # ImageMagick 7.1.2 portable
+│       └── magick.exe              # Eseguibile per creazione ICO
+│
+├── asset/                          # Icone e risorse GUI
+├── venv/                           # Virtual environment (creato da setup.bat)
+└── dist/                           # Exe portabile (generato da build.bat)
+```
 
 ---
 
@@ -73,16 +95,32 @@ build.bat
 
 Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna installazione necessaria.
 
-> L'exe non include i modelli rembg: verranno scaricati in `~/.u2net/` al primo utilizzo su ogni macchina.
+**Incluso nella distribuzione:**
+- ✅ Tutte le dipendenze Python (rembg, Pillow, customtkinter, svglib, reportlab, etc.)
+- ✅ **ImageMagick 7.1.2** (per creazione ICO perfette)
+
+**Non incluso (scaricato al primo utilizzo):**
+- Modelli rembg AI: verranno scaricati in `~/.u2net/` al primo utilizzo su ogni macchina
 
 ---
 
 ## Dipendenze principali
 
+### Python (pip)
+
 | Pacchetto | Ruolo |
 |---|---|
 | `rembg` | Rimozione sfondo AI |
-| `Pillow` | Manipolazione immagini e salvataggio ICO |
+| `Pillow` | Manipolazione immagini |
 | `onnxruntime` | Esecuzione modelli AI (CPU) |
 | `customtkinter` | Interfaccia grafica moderna |
+| `svglib` + `reportlab` | Rendering SVG a PNG |
 | `pyinstaller` | Build exe portabile |
+
+### Esterne (incluse nella distribuzione)
+
+| Strumento | Ruolo | Versione |
+|---|---|---|
+| **ImageMagick** | Creazione ICO multi-frame perfette | 7.1.2-Q16-HDRI |
+
+> ImageMagick è incluso come folder `third-party/imagemagick/` nel build exe. Non richiede installazione separata.
