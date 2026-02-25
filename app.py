@@ -364,7 +364,8 @@ class App(ctk.CTk):
 
     def _on_resize(self, event):
         """Ridimensiona il box immagini mentre si trascina il divider."""
-        delta = event.y_root - self._resize_data["y"]
+        # Delta invertito: trascinare VERSO L'ALTO riduce l'altezza
+        delta = self._resize_data["y"] - event.y_root
         new_height = max(50, int(self._resize_data["original_height"]) + delta)
         self.scroll_files.configure(height=new_height)
 
