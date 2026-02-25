@@ -58,9 +58,71 @@ class App(ctk.CTk):
         self.scroll_files.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="ew")
         self.scroll_files.grid_columnconfigure(0, weight=1)
 
-        # ── operazioni ───────────────────────────────────────────────────────
+        # ── modalità ──────────────────────────────────────────────────────────
+        frm_mod = ctk.CTkFrame(self)
+        frm_mod.grid(row=1, column=0, padx=12, pady=6, sticky="ew")
+        frm_mod.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(frm_mod, text="Modalità",
+                     font=ctk.CTkFont(size=13, weight="bold")).grid(
+            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+
+        self.var_modalita = tk.StringVar(value="ico")
+
+        mod_row = ctk.CTkFrame(frm_mod, fg_color="transparent")
+        mod_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
+
+        ctk.CTkRadioButton(mod_row, text="Converti ICO",
+                           variable=self.var_modalita, value="ico",
+                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
+        ctk.CTkRadioButton(mod_row, text="Favicon Generator",
+                           variable=self.var_modalita, value="favicon",
+                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
+        ctk.CTkRadioButton(mod_row, text="App Store Icons",
+                           variable=self.var_modalita, value="appstore",
+                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
+        ctk.CTkRadioButton(mod_row, text="Format Conversion",
+                           variable=self.var_modalita, value="format",
+                           command=self._on_modalita_change).pack(side="left", padx=(4, 14))
+
+        # ── opzioni contestuali per modalità ──────────────────────────────────
+        self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
+        self.frm_format_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
+        self.frm_format_opts.grid_columnconfigure(1, weight=1)
+        self.frm_format_opts.grid(remove=True)  # Nascondi inizialmente
+
+        ctk.CTkLabel(self.frm_format_opts, text="Formato:").grid(row=0, column=0, padx=4, sticky="w")
+        self.var_formato = tk.StringVar(value="png")
+        self.om_formato = ctk.CTkOptionMenu(
+            self.frm_format_opts, variable=self.var_formato,
+            values=["PNG", "JPG", "WebP", "GIF"], width=100)
+        self.om_formato.grid(row=0, column=1, padx=(4, 14), sticky="ew")
+
+        ctk.CTkLabel(self.frm_format_opts, text="Qualità:").grid(row=0, column=2, padx=4, sticky="w")
+        self.var_qualita = tk.IntVar(value=85)
+        self.slider_qualita = ctk.CTkSlider(
+            self.frm_format_opts, from_=1, to=100, variable=self.var_qualita,
+            number_of_steps=99, width=150)
+        self.slider_qualita.grid(row=0, column=3, padx=(4, 10), sticky="ew")
+        self.lbl_qualita = ctk.CTkLabel(self.frm_format_opts, text="85", width=30)
+        self.lbl_qualita.grid(row=0, column=4, sticky="w")
+        self.slider_qualita.configure(command=lambda v: self.lbl_qualita.configure(text=str(int(float(v)))))
+
+        # Opzioni app store
+        self.frm_appstore_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
+        self.frm_appstore_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
+        self.frm_appstore_opts.grid(remove=True)  # Nascondi inizialmente
+
+        ctk.CTkLabel(self.frm_appstore_opts, text="Store:").grid(row=0, column=0, padx=4, sticky="w")
+        self.var_store = tk.StringVar(value="google")
+        self.om_store = ctk.CTkOptionMenu(
+            self.frm_appstore_opts, variable=self.var_store,
+            values=["Google Play", "Apple App Store", "Microsoft Store"], width=150)
+        self.om_store.grid(row=0, column=1, padx=4, sticky="ew")
+
+        # ── operazioni (spostate) ─────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
-        frm_op.grid(row=1, column=0, padx=12, pady=6, sticky="ew")
+        frm_op.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(frm_op, text="Operazioni",
@@ -227,6 +289,20 @@ class App(ctk.CTk):
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
 
+    def _on_modalita_change(self):
+        """Mostra/nascondi opzioni a seconda della modalità selezionata."""
+        modalita = self.var_modalita.get()
+
+        # Nascondi tutte le opzioni
+        self.frm_format_opts.grid(remove=True)
+        self.frm_appstore_opts.grid(remove=True)
+
+        # Mostra opzioni rilevanti
+        if modalita == "format":
+            self.frm_format_opts.grid()
+        elif modalita == "appstore":
+            self.frm_appstore_opts.grid()
+
     def _set_ui_busy(self, busy: bool):
         stato = "disabled" if busy else "normal"
         self.btn_processa.configure(state=stato)
@@ -248,29 +324,68 @@ class App(ctk.CTk):
         self._set_ui_busy(True)
         self.progress.set(0)
 
+        modalita = self.var_modalita.get()
+        kwargs = {
+            'modalita': modalita,
+            'output_dir': output_dir,
+        }
+
+        # Aggiungi parametri specifici della modalità
+        if modalita == "format":
+            kwargs['formato'] = self.var_formato.get().lower()
+            kwargs['qualita'] = self.var_qualita.get()
+        elif modalita == "appstore":
+            store_map = {"Google Play": "google", "Apple App Store": "apple", "Microsoft Store": "microsoft"}
+            kwargs['store'] = store_map.get(self.var_store.get(), "google")
+
         threading.Thread(
             target=self._worker,
-            args=(list(self._file_list), output_dir),
+            args=(list(self._file_list),),
+            kwargs=kwargs,
             daemon=True).start()
 
-    def _worker(self, files: list[str], output_dir):
-        rimuovi_bg = self.var_bg.get()
-        quadrato   = self.var_sq.get()
-        ico        = self.var_ico.get()
-        modello    = self.var_modello.get()
-        totale     = len(files)
+    def _worker(self, files: list[str], modalita: str, output_dir: str,
+                formato: str = None, qualita: int = 85, store: str = None):
+        totale = len(files)
 
-        for i, path in enumerate(files, 1):
-            elabora_file(
-                input_path=path,
-                output_dir=output_dir,
-                rimuovi_bg=rimuovi_bg,
-                quadrato=quadrato,
-                converti_ico=ico,
-                modello=modello,
-                log_fn=lambda msg: self.after(0, self._log, msg),
-            )
-            self.after(0, self.progress.set, i / totale)
+        # Importa le funzioni per le nuove modalità
+        from core import converti_formato_batch, genera_favicon_batch, genera_app_store_icons_batch
+
+        log_fn = lambda msg: self.after(0, self._log, msg)
+
+        if modalita == "ico":
+            # Modalità originale: Converti ICO
+            rimuovi_bg = self.var_bg.get()
+            quadrato   = self.var_sq.get()
+            ico        = self.var_ico.get()
+            modello    = self.var_modello.get()
+
+            for i, path in enumerate(files, 1):
+                elabora_file(
+                    input_path=path,
+                    output_dir=output_dir,
+                    rimuovi_bg=rimuovi_bg,
+                    quadrato=quadrato,
+                    converti_ico=ico,
+                    modello=modello,
+                    log_fn=log_fn,
+                )
+                self.after(0, self.progress.set, i / totale)
+
+        elif modalita == "format":
+            # Conversione formato
+            converti_formato_batch(files, formato, qualita, output_dir, log_fn)
+            self.after(0, self.progress.set, 1.0)
+
+        elif modalita == "favicon":
+            # Favicon generator
+            genera_favicon_batch(files, output_dir, log_fn)
+            self.after(0, self.progress.set, 1.0)
+
+        elif modalita == "appstore":
+            # App store icons
+            genera_app_store_icons_batch(files, store, output_dir, log_fn)
+            self.after(0, self.progress.set, 1.0)
 
         self.after(0, self._done)
 
