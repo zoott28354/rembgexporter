@@ -168,12 +168,13 @@ def _render_svg_to_png(svg_path: str) -> Image.Image:
 
 
 def salva_ico(img: Image.Image, output_path: str):
-    """Salva l'immagine come file .ico multi-risoluzione (PNG-in-ICO, Windows Vista+).
+    """Salva l'immagine come file .ico multi-risoluzione (BMP + PNG come daddy.ico).
 
-    Pillow non supporta dimensioni > 256 nel suo saver ICO e scarta silenziosamente
-    tutti i frame se l'immagine principale è piccola (es. 16×16).
-    Scriviamo il file ICO manualmente per includere tutti gli 8 frame
-    da 16×16 fino a 512×512, ciascuno salvato come PNG compresso.
+    Frame < 128: salvati come DIB/BMP (formato nativo Windows, no PNG header).
+    Frame >= 128: salvati come PNG compresso (migliore compressione, supporto Vista+).
+
+    Windows sceglie il primo frame BMP grande disponibile, quindi con questa
+    struttura mostrerà 128×128 come risoluzione principale (non 16×16).
     """
     # 1. Converti al profilo colore sRGB per preservare i colori originali
     if 'icc_profile' in img.info:
@@ -186,12 +187,16 @@ def salva_ico(img: Image.Image, output_path: str):
     else:
         img = img.convert('RGBA')
 
-    # 2. Ridimensiona ogni frame con LANCZOS e serializza come PNG in memoria
+    # 2. Ridimensiona ogni frame con LANCZOS e serializza come BMP/PNG in memoria
     frames_data = []
     for w, h in ICON_SIZES:
         frame = img.resize((w, h), Image.Resampling.LANCZOS)
         buf = io.BytesIO()
-        frame.save(buf, format='PNG')
+        # BMP per frame piccoli, PNG per frame grandi (come daddy.ico)
+        if w < 128:
+            frame.save(buf, format='dib')  # DIB = BMP senza header (formato ICO)
+        else:
+            frame.save(buf, format='PNG')
         frames_data.append((w, h, buf.getvalue()))
 
     # 3. Scrittura manuale del file ICO
