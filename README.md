@@ -1,10 +1,13 @@
 # Convertitore Immagini → ICO
 
-Tool con interfaccia grafica multipiano per elaborare immagini in 4 modalità diverse:
+**Autore:** [zoott28354](https://github.com/zoott28354)
+**Repository:** [Image-background-remover-and-ICO-converter](https://github.com/zoott28354/Image-background-remover-and-ICO-converter)
+
+Tool con interfaccia grafica a sidebar per elaborare immagini in 4 modalità diverse:
 - **Converti ICO**: Icone Windows multi-risoluzione con rimozione sfondo AI
 - **Favicon Generator**: Favicon web complete con manifest.json PWA
 - **App Store Icons**: Icone ottimizzate per Google Play, Apple Store, Microsoft Store
-- **Format Conversion**: Conversione batch tra PNG, JPG, WebP, GIF con controllo qualità
+- **Format Conversion**: Conversione batch tra PNG, JPG, WebP, GIF con controllo qualità e rimozione sfondo
 
 ---
 
@@ -40,7 +43,8 @@ nomefile.ico             # Icona multi-risoluzione 16 · 24 · 32 · 48 · 64 ·
 
 ### 🌐 2. Favicon Generator — Favicon completa per siti web
 
-Genera un pacchetto favicon completo per siti web moderni e PWA:
+Genera un pacchetto favicon completo per siti web moderni e PWA.
+Supporta opzionalmente rimozione sfondo AI e ritaglio a quadrato.
 
 **File generati:**
 ```
@@ -63,7 +67,8 @@ manifest.json            # Manifest PWA con riferimenti icone
 
 ### 📱 3. App Store Icons — Icone ottimizzate per store applicativi
 
-Genera icone con dimensioni esatte per i principali app store:
+Genera icone con dimensioni esatte per i principali app store.
+Supporta opzionalmente rimozione sfondo AI e ritaglio a quadrato.
 
 **Google Play Store:**
 ```
@@ -84,46 +89,43 @@ tile_150.png             # 150×150 tile standard
 tile_70.png              # 70×70 tile small
 ```
 
-> Selezionare lo store dalla dropdown menu. Le immagini vengono ridimensionate e ottimizzate automaticamente mantenendo l'aspect ratio.
+> Selezionare lo store dalla dropdown menu. Le immagini vengono ridimensionate e ottimizzate automaticamente.
 
 ---
 
 ### 🎨 4. Format Conversion — Conversione batch tra formati
 
-Converte immagini tra formati con controllo qualità:
+Converte immagini tra formati con controllo qualità.
+Supporta opzionalmente **rimozione sfondo AI** e **ritaglio a quadrato** prima della conversione.
 
 **Formati supportati:**
 - PNG (lossless)
-- JPG (lossy, quality 1-100)
+- JPG (lossy, quality 1-100) — sfondo bianco se rimozione sfondo attiva
 - WebP (moderno, quality 1-100)
-- GIF (animato se supportato)
+- GIF
 
 **Controllo qualità:** Slider 1-100 (per JPG e WebP)
-- Valori alti = migliore qualità, file più grande
-- Valori bassi = qualità inferiore, file più piccolo
 
 **Output generato:**
 ```
-nomefile.png             # Se convertito a PNG
-nomefile.jpg             # Se convertito a JPG
-nomefile.webp            # Se convertito a WebP
-nomefile.gif             # Se convertito a GIF
+nomefile.png / .jpg / .webp / .gif    # Nel formato selezionato
 ```
 
-> Supporta elaborazione batch: carica più file contemporaneamente, tutti verranno convertiti nello stesso formato con la stessa qualità.
+> Supporta elaborazione batch: carica più file contemporaneamente.
 
 ---
 
-## Elaborazione Batch
+## Operazioni disponibili
 
-Tutte le 4 modalità supportano l'elaborazione simultanea di **più file**:
+Le operazioni nella sezione **Operazioni** si adattano alla modalità selezionata:
 
-1. **Seleziona file multipli** nella lista (Ctrl+Click)
-2. **Scegli la modalità** desiderata (ICO / Favicon / App Store / Format)
-3. **Configura le opzioni** specifiche (AI model, store, formato, qualità)
-4. **Avvia elaborazione** — La progress bar mostra avanzamento file per file
+| Operazione | ICO | Favicon | App Store | Format |
+|---|---|---|---|---|
+| 1. Rimuovi sfondo (AI) | ✅ | ✅ | ✅ | ✅ |
+| 2. Ritaglia a quadrato | ✅ | ✅ | ✅ | ✅ |
+| 3. Output | checkbox ICO/PNG | info fisso | info fisso | info dinamico |
 
-Ogni file viene elaborato sequenzialmente con output salvato in cartelle separate.
+> In modalità non-ICO, l'operazione 3 mostra un'etichetta informativa sull'output fisso o selezionato.
 
 ---
 
@@ -131,45 +133,42 @@ Ogni file viene elaborato sequenzialmente con output salvato in cartelle separat
 
 ### Interfaccia principale
 
-1. **Selezione file**: Drag & drop o browse button per aggiungere immagini (PNG, JPG, SVG)
-2. **Scelta modalità**: Radio buttons nella sezione "Modalità"
-   - **Converti ICO**: Opzioni per AI model e crop square
-   - **Favicon Generator**: Nessuna opzione aggiuntiva
-   - **App Store Icons**: Dropdown per scegliere lo store (Google Play, Apple, Microsoft)
-   - **Format Conversion**: Dropdown formato + slider qualità
-3. **Output directory**: Scegli dove salvare i file elaborati
-4. **Avvia elaborazione**: Pulsante "Processa" avvia il worker thread
-5. **Progress bar**: Mostra avanzamento in tempo reale
+L'interfaccia è divisa in due pannelli:
 
-### Opzioni speciali per modalità
+- **Sidebar sinistra** — Lista immagini: aggiungi, rimuovi singoli file o pulisci tutto
+- **Pannello destro** — Tutte le opzioni: modalità, operazioni, destinazione, avvio
 
-**Converti ICO:**
-- ✅ Rimozione sfondo: Attiva/disattiva rembg
-- 🎯 Modello AI: 6 opzioni disponibili
-- ⬜ Ritaglio quadrato: Centra su sfondo trasparente
+**Flusso di utilizzo:**
+1. **Aggiungi file** con il pulsante "+ Aggiungi" (PNG, JPG, SVG, BMP, WebP, GIF)
+2. **Scegli la modalità** nella sezione "Modalità"
+3. **Configura le operazioni** (rimozione sfondo, modello AI, ritaglio)
+4. **Scegli la destinazione** output (stessa cartella o personalizzata)
+5. **Avvia** con il pulsante "PROCESSA"
+6. **Monitora** l'avanzamento nella progress bar e nel log
 
-**Format Conversion:**
-- 📋 Formato: PNG / JPG / WebP / GIF
-- 🎚️ Qualità: 1 (minima, veloce) → 100 (massima, pesante)
+### Tooltip
+
+Tutti i pulsanti, checkbox e menu mostrano un **tooltip descrittivo** al passaggio del mouse (delay 500ms).
 
 ---
 
 ## Struttura del progetto
 
 ```
-script-per-convertire-immagini-in-ico/
-├── app.py                          # Interfaccia GUI (Tkinter)
+Image-background-remover-and-ICO-converter/
+├── app.py                          # Interfaccia GUI (CustomTkinter)
 ├── core.py                         # Pipeline elaborazione immagini
 ├── build.bat                       # Build exe con PyInstaller
 ├── setup.bat                       # Setup venv e dipendenze
-├── lancia.bat                      # Avvio app (generato da setup)
+├── lancia.vbs                      # Avvio app senza finestra CMD (generato da setup)
+├── version_info.txt                # Metadati Windows per l'exe (autore, versione, copyright)
 ├── requirements.txt                # Dipendenze Python
+├── convertICO.ico                  # Icona applicazione
 │
 ├── third-party/
 │   └── imagemagick/                # ImageMagick 7.1.2 portable
-│       └── magick.exe              # Eseguibile per creazione ICO
+│       └── magick.exe
 │
-├── asset/                          # Icone e risorse GUI
 ├── venv/                           # Virtual environment (creato da setup.bat)
 └── dist/                           # Exe portabile (generato da build.bat)
 ```
@@ -182,7 +181,7 @@ script-per-convertire-immagini-in-ico/
 setup.bat
 ```
 
-Crea il virtual environment, installa tutte le dipendenze e genera `lancia.bat`.
+Crea il virtual environment, installa tutte le dipendenze e genera `lancia.vbs`.
 
 **Requisiti:** Python 3.10+ installato nel sistema.
 
@@ -191,10 +190,10 @@ Crea il virtual environment, installa tutte le dipendenze e genera `lancia.bat`.
 ## Avvio
 
 ```bat
-lancia.bat
+lancia.vbs
 ```
 
-Generato da `setup.bat`. Avvia l'app senza finestre console.
+Avvia l'app **senza finestre CMD** in background. Generato automaticamente da `setup.bat`.
 
 ---
 
@@ -209,6 +208,7 @@ Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna
 **Incluso nella distribuzione:**
 - ✅ Tutte le dipendenze Python (rembg, Pillow, customtkinter, svglib, reportlab, etc.)
 - ✅ **ImageMagick 7.1.2** (per creazione ICO perfette)
+- ✅ Metadati Windows (autore, copyright, URL GitHub visibili in Proprietà → Dettagli)
 
 **Non incluso (scaricato al primo utilizzo):**
 - Modelli rembg AI: verranno scaricati in `~/.u2net/` al primo utilizzo su ogni macchina
@@ -234,8 +234,6 @@ Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna
 |---|---|---|
 | **ImageMagick** | Creazione ICO multi-frame, favicon, app store icons, format conversion | 7.1.2-Q16-HDRI |
 
-> ImageMagick è incluso come folder `third-party/imagemagick/` nel build exe. Non richiede installazione separata.
-
 ---
 
 ## Tecnologie utilizzate
@@ -243,7 +241,7 @@ Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna
 | Tecnologia | Utilizzo |
 |---|---|
 | **Python 3.10+** | Linguaggio principale |
-| **CustomTkinter** | GUI moderna e responsiva |
+| **CustomTkinter** | GUI moderna con layout sidebar |
 | **rembg** | Rimozione sfondo con AI (reti neurali profonde) |
 | **Pillow (PIL)** | Manipolazione immagini e profili colore |
 | **ImageMagick CLI** | Elaborazione batch, creazione ICO multi-frame, conversione formati |
@@ -262,16 +260,16 @@ Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna
 2. Scegli "Converti ICO"
 3. Seleziona modello AI (birefnet-general consigliato)
 4. ✅ Attiva rimozione sfondo e ritaglio quadrato
-5. Clicca "Processa"
+5. Clicca "PROCESSA"
 ```
-**Output:** `logo_nobg.png`, `logo.ico` (256×256 primaria)
+**Output:** `logo_nobg.png`, `logo.ico` (7 risoluzioni: 16→256px)
 
 ### Esempio 2: Creare favicon per sito web
 
 ```
 1. Aggiungi logo_quadrato.png (almeno 512×512)
 2. Scegli "Favicon Generator"
-3. Clicca "Processa"
+3. Clicca "PROCESSA"
 ```
 **Output:** `favicon.ico`, `favicon.png`, `favicon-192.png`, `favicon-512.png`, `manifest.json`
 
@@ -281,17 +279,17 @@ Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna
 1. Aggiungi app_icon.png (1024×1024 minimo)
 2. Scegli "App Store Icons"
 3. Seleziona "Apple App Store" dal menu
-4. Clicca "Processa"
+4. Clicca "PROCESSA"
 ```
 **Output:** `app_store_1024.png`, `iphone_180.png`, `ipad_pro_167.png`, `ipad_152.png`
 
-### Esempio 4: Convertire batch di foto a WebP (ottimizzate web)
+### Esempio 4: Convertire foto a WebP con sfondo rimosso
 
 ```
-1. Aggiungi 10 foto JPG
+1. Aggiungi foto.jpg
 2. Scegli "Format Conversion"
-3. Seleziona formato "WebP"
-4. Imposta qualità a 80
-5. Clicca "Processa"
+3. Seleziona formato "WebP", qualità 80
+4. ✅ Attiva rimozione sfondo
+5. Clicca "PROCESSA"
 ```
-**Output:** 10 file `.webp` ottimizzati (qualità web/mobile)
+**Output:** `foto.webp` con sfondo trasparente
