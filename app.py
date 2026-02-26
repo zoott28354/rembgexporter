@@ -202,7 +202,8 @@ class App(ctk.CTk):
         self.var_formato = tk.StringVar(value="png")
         self.om_formato = ctk.CTkOptionMenu(
             self.frm_format_opts, variable=self.var_formato,
-            values=["PNG", "JPG", "WebP", "GIF"], width=100)
+            values=["PNG", "JPG", "WebP", "GIF"], width=100,
+            command=lambda _: self._aggiorna_lbl_output())
         self.om_formato.grid(row=0, column=1, padx=(4, 14), sticky="ew")
         Tooltip(self.om_formato, "Formato di output per la conversione")
 
@@ -283,6 +284,14 @@ class App(ctk.CTk):
                                         variable=self.var_ico)
         self.chk_ico.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
         Tooltip(self.chk_ico, "Converti in ICO multi-frame\n(Se no, salva solo PNG)")
+
+        # Label informativa per modalità non-ICO (alternativa a chk_ico)
+        self.lbl_output_info = ctk.CTkLabel(
+            frm_op, text="",
+            text_color=("gray40", "gray60"),
+            font=ctk.CTkFont(size=12))
+        self.lbl_output_info.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
+        self.lbl_output_info.grid_remove()  # nascosta di default (visibile solo in modalità non-ICO)
 
         ctk.CTkLabel(frm_out, text="Destinazione output",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -410,11 +419,25 @@ class App(ctk.CTk):
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
 
+    def _aggiorna_lbl_output(self):
+        """Aggiorna il testo della label informativa output in base alla modalità."""
+        modalita = self.var_modalita.get()
+        if modalita == "favicon":
+            testo = "3.  Output fisso: ICO + PNG + manifest.json"
+        elif modalita == "appstore":
+            testo = "3.  Output fisso: PNG nelle dimensioni store"
+        elif modalita == "format":
+            fmt = self.var_formato.get().upper()
+            testo = f"3.  Output: {fmt}"
+        else:
+            testo = ""
+        self.lbl_output_info.configure(text=testo)
+
     def _on_modalita_change(self):
         """Mostra/nascondi opzioni a seconda della modalità selezionata."""
         modalita = self.var_modalita.get()
 
-        # Nascondi tutte le opzioni
+        # Nascondi tutte le opzioni contestuali formato/store
         self.frm_format_opts.grid_remove()
         self.frm_appstore_opts.grid_remove()
 
@@ -423,6 +446,15 @@ class App(ctk.CTk):
             self.frm_format_opts.grid()
         elif modalita == "appstore":
             self.frm_appstore_opts.grid()
+
+        # Checkbox 3 visibile solo in modalità ICO, altrimenti label informativa
+        if modalita == "ico":
+            self.chk_ico.grid()
+            self.lbl_output_info.grid_remove()
+        else:
+            self.chk_ico.grid_remove()
+            self.lbl_output_info.grid()
+            self._aggiorna_lbl_output()
 
     def _set_ui_busy(self, busy: bool):
         stato = "disabled" if busy else "normal"
