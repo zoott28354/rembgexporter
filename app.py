@@ -15,42 +15,62 @@ def _resource_path(nome: str) -> str:
 
 
 class Tooltip:
-    """Crea un tooltip (etichetta popup) al passaggio del mouse."""
+    """Crea un tooltip (etichetta popup) al passaggio del mouse con delay."""
     def __init__(self, widget, text):
         self.widget = widget
         self.text = text
         self.tooltip = None
+        self._tooltip_timer = None
+        self._showing = False
         self.widget.bind("<Enter>", self._show_tooltip)
         self.widget.bind("<Leave>", self._hide_tooltip)
 
     def _show_tooltip(self, event):
-        """Mostra il tooltip."""
+        """Schedula la visualizzazione del tooltip con delay di 500ms."""
+        if self._showing or self._tooltip_timer:
+            return
+        self._tooltip_timer = self.widget.after(500, self._show_tooltip_delayed)
+
+    def _show_tooltip_delayed(self):
+        """Mostra il tooltip (chiamato dopo delay)."""
         if self.tooltip:
             return
 
-        # Crea una finestra toplevel per il tooltip
-        self.tooltip = tk.Toplevel(self.widget)
-        self.tooltip.wm_overrideredirect(True)
+        try:
+            self.tooltip = tk.Toplevel(self.widget)
+            self.tooltip.wm_overrideredirect(True)
+            self.tooltip.attributes("-topmost", True)
 
-        # Crea label con il testo
-        label = tk.Label(
-            self.tooltip, text=self.text,
-            background="#1a1a1a", foreground="#e0e0e0",
-            relief="solid", borderwidth=1,
-            font=("Arial", 10), padx=8, pady=4
-        )
-        label.pack()
+            # Crea label con il testo
+            label = tk.Label(
+                self.tooltip, text=self.text,
+                background="#1a1a1a", foreground="#e0e0e0",
+                relief="solid", borderwidth=1,
+                font=("Arial", 10), padx=8, pady=4
+            )
+            label.pack()
 
-        # Posiziona il tooltip sopra il widget
-        x = event.x_root
-        y = event.y_root - 30
-        self.tooltip.wm_geometry(f"+{x}+{y}")
+            # Posiziona il tooltip sopra il widget (approssimato)
+            self.tooltip.wm_geometry(f"+{self.widget.winfo_rootx()}+{self.widget.winfo_rooty() - 40}")
+            self._showing = True
+        except Exception:
+            pass
+        finally:
+            self._tooltip_timer = None
 
     def _hide_tooltip(self, event):
-        """Nasconde il tooltip."""
+        """Nasconde il tooltip e cancella timer pending."""
+        if self._tooltip_timer:
+            self.widget.after_cancel(self._tooltip_timer)
+            self._tooltip_timer = None
+
         if self.tooltip:
-            self.tooltip.destroy()
+            try:
+                self.tooltip.destroy()
+            except Exception:
+                pass
             self.tooltip = None
+        self._showing = False
 
 
 from core import elabora_file, SUPPORTED_EXT, MODELLI_REMBG, MODELLO_DEFAULT, DESCRIZIONI_MODELLI
@@ -65,8 +85,8 @@ class App(ctk.CTk):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('ConvertICO.App')
         self.title("Convertitore Immagini → ICO")
         self.iconbitmap(_resource_path('convertICO.ico'))
-        self.geometry("680x840")
-        self.minsize(680, 780)
+        self.geometry("1000x700")
+        self.minsize(900, 650)
         self.resizable(True, True)
         self._file_list: list[str] = []
         self._build_ui()
@@ -74,12 +94,15 @@ class App(ctk.CTk):
     # ── costruzione UI ────────────────────────────────────────────────────────
 
     def _build_ui(self):
-        self.grid_columnconfigure(0, weight=1)
+        # Layout sidebar: colonna sinistra 180px, colonna destra flex
+        self.grid_columnconfigure(0, weight=0, minsize=180)
+        self.grid_columnconfigure(1, weight=1)
 
-        # ── lista file ────────────────────────────────────────────────────────
+        # ── lista file (SIDEBAR sinistra) ─────────────────────────────────────
         frm_lista = ctk.CTkFrame(self)
-        frm_lista.grid(row=0, column=0, padx=12, pady=(12, 6), sticky="ew")
+        frm_lista.grid(row=0, column=0, rowspan=100, padx=12, pady=(6, 12), sticky="nsew")
         frm_lista.grid_columnconfigure(0, weight=1)
+        frm_lista.grid_rowconfigure(2, weight=1)  # Canvas cresce verticalmente
 
         ctk.CTkLabel(frm_lista, text="Immagini",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -99,37 +122,41 @@ class App(ctk.CTk):
         self.btn_pulisci.pack(side="left")
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
-        # Canvas + scrollbar per altezza minima controllabile
-        scroll_row = ctk.CTkFrame(frm_lista, fg_color="transparent")
-        scroll_row.grid(row=2, column=0, padx=8, pady=(0, 0), sticky="ewns")
-        scroll_row.grid_columnconfigure(0, weight=1)
+        # Area file con stile identico al log (nessuna scrollbar visibile)
+        # Usa esattamente gli stessi colori di CTkTextbox
+        _tb_colors = ctk.ThemeManager.theme["CTkTextbox"]["fg_color"]
+        _is_dark = ctk.get_appearance_mode() == "Dark"
+        _canvas_bg = _tb_colors[1] if _is_dark else _tb_colors[0]
 
-        canvas = tk.Canvas(scroll_row, height=10, bg="#212121", highlightthickness=0)
-        canvas.grid(row=0, column=0, sticky="ewns")
+        frm_files_box = ctk.CTkFrame(
+            frm_lista,
+            fg_color=_tb_colors,
+            corner_radius=ctk.ThemeManager.theme["CTkTextbox"]["corner_radius"])
+        frm_files_box.grid(row=2, column=0, padx=8, pady=(0, 10), sticky="nsew")
+        frm_files_box.grid_columnconfigure(0, weight=1)
+        frm_files_box.grid_rowconfigure(0, weight=1)
 
-        scrollbar = tk.Scrollbar(scroll_row, orient="vertical", command=canvas.yview)
-        scrollbar.grid(row=0, column=1, sticky="ns")
-        canvas.config(yscrollcommand=scrollbar.set)
+        self._canvas_files = tk.Canvas(
+            frm_files_box, bg=_canvas_bg, highlightthickness=0)
+        self._canvas_files.grid(row=0, column=0, padx=4, pady=4, sticky="nsew")
 
-        self.scroll_files = tk.Frame(canvas, bg="#212121")
-        canvas.create_window(0, 0, window=self.scroll_files, anchor="nw")
-        canvas.config(scrollregion=canvas.bbox("all"))
-        self.scroll_files.bind("<Configure>", lambda e: canvas.config(scrollregion=canvas.bbox("all")))
+        self.scroll_files = tk.Frame(self._canvas_files, bg=_canvas_bg)
+        self._cw = self._canvas_files.create_window(0, 0, window=self.scroll_files, anchor="nw")
 
-        # Salva riferimento al canvas per il divider
-        self.canvas_files = canvas
+        self.scroll_files.bind("<Configure>", lambda e: self._canvas_files.config(
+            scrollregion=self._canvas_files.bbox("all")))
+        self._canvas_files.bind("<Configure>", lambda e: self._canvas_files.itemconfig(
+            self._cw, width=e.width))
 
-        # ── divider trascinabile ──────────────────────────────────────────────
-        self.divider = tk.Frame(self, height=6, bg="#444444", relief="raised", bd=1, cursor="sb_v_double_arrow")
-        self.divider.grid(row=1, column=0, padx=0, pady=4, sticky="ew")
-        self.divider.bind("<Button-1>", self._start_resize_divider)
-        self.divider.bind("<B1-Motion>", self._on_resize_divider)
-        self.divider.bind("<ButtonRelease-1>", self._stop_resize_divider)
-        self._divider_data = {"y": 0, "original_height": 10}
+        # Mousewheel scrolling senza scrollbar visibile
+        self._canvas_files.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
+            int(-1 * (e.delta / 120)), "units"))
+        self.scroll_files.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
+            int(-1 * (e.delta / 120)), "units"))
 
-        # ── modalità ──────────────────────────────────────────────────────────
+        # ── modalità (MAIN CONTENT destra) ────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
-        frm_mod.grid(row=2, column=0, padx=12, pady=6, sticky="ew")
+        frm_mod.grid(row=0, column=1, padx=12, pady=6, sticky="ew")
         frm_mod.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(frm_mod, text="Modalità",
@@ -203,14 +230,14 @@ class App(ctk.CTk):
         self.om_store.grid(row=0, column=1, padx=4, sticky="ew")
         Tooltip(self.om_store, "Scegli lo store per le dimensioni icone")
 
-        # ── operazioni (spostate) ─────────────────────────────────────────────
+        # ── operazioni ────────────────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
-        frm_op.grid(row=3, column=0, padx=12, pady=6, sticky="ew")
+        frm_op.grid(row=1, column=1, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
         # ── output ────────────────────────────────────────────────────────────
         frm_out = ctk.CTkFrame(self)
-        frm_out.grid(row=4, column=0, padx=12, pady=6, sticky="ew")
+        frm_out.grid(row=2, column=1, padx=12, pady=6, sticky="ew")
         frm_out.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(frm_op, text="Operazioni",
@@ -290,19 +317,19 @@ class App(ctk.CTk):
             self, text="PROCESSA", height=44,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
-        self.btn_processa.grid(row=5, column=0, padx=12, pady=(8, 4), sticky="ew")
+        self.btn_processa.grid(row=3, column=1, padx=12, pady=(8, 4), sticky="ew")
         Tooltip(self.btn_processa, "Avvia l'elaborazione dei file selezionati")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
-        self.progress.grid(row=6, column=0, padx=12, pady=(0, 6), sticky="ew")
+        self.progress.grid(row=4, column=1, padx=12, pady=(0, 6), sticky="ew")
 
-        # ── log ───────────────────────────────────────────────────────────────
+        # ── log (scrollabile a destra) ────────────────────────────────────────
         frm_log = ctk.CTkFrame(self)
-        frm_log.grid(row=7, column=0, padx=12, pady=(0, 12), sticky="nsew")
+        frm_log.grid(row=5, column=1, padx=12, pady=(0, 12), sticky="nsew")
         frm_log.grid_columnconfigure(0, weight=1)
         frm_log.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(7, weight=1)
+        self.grid_rowconfigure(5, weight=1)
 
         ctk.CTkLabel(frm_log, text="Log",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -323,14 +350,18 @@ class App(ctk.CTk):
             row = ctk.CTkFrame(self.scroll_files, fg_color="transparent")
             row.grid(row=i, column=0, sticky="ew", pady=1)
             row.grid_columnconfigure(0, weight=1)
-            ctk.CTkLabel(row, text=os.path.basename(path),
-                         anchor="w").grid(row=0, column=0, padx=6, sticky="ew")
-            ctk.CTkButton(row, text="✕", width=28, height=24,
+            lbl = ctk.CTkLabel(row, text=os.path.basename(path), anchor="w")
+            lbl.grid(row=0, column=0, padx=6, sticky="ew")
+            btn = ctk.CTkButton(row, text="✕", width=28, height=24,
                           fg_color="transparent",
                           hover_color=("gray80", "gray25"),
                           text_color=("gray30", "gray70"),
-                          command=lambda p=path: self._rimuovi_file(p)).grid(
-                row=0, column=1, padx=(0, 4))
+                          command=lambda p=path: self._rimuovi_file(p))
+            btn.grid(row=0, column=1, padx=(0, 4))
+            # Propaga mousewheel al canvas padre
+            for w in (row, lbl, btn):
+                w.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
+                    int(-1 * (e.delta / 120)), "units"))
 
     def _aggiungi(self):
         tipi = [("Immagini", " ".join(f"*{e}" for e in SUPPORTED_EXT)),
@@ -372,21 +403,6 @@ class App(ctk.CTk):
             self.entry_dest.configure(state="normal")
             self.entry_dest.delete(0, "end")
             self.entry_dest.insert(0, d)
-
-    def _start_resize_divider(self, event):
-        """Inizia il trascinamento del divider."""
-        self._divider_data["y"] = event.y_root
-        self._divider_data["original_height"] = self.canvas_files.cget("height")
-
-    def _on_resize_divider(self, event):
-        """Ridimensiona il canvas mentre si trascina il divider (verso l'alto riduce)."""
-        delta = self._divider_data["y"] - event.y_root
-        new_height = max(10, int(self._divider_data["original_height"]) + delta)
-        self.canvas_files.configure(height=new_height)
-
-    def _stop_resize_divider(self, event):
-        """Termina il trascinamento."""
-        self._divider_data["original_height"] = self.canvas_files.cget("height")
 
     def _log(self, msg: str):
         self.log_text.configure(state="normal")

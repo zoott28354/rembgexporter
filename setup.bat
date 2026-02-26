@@ -5,12 +5,14 @@ python -m venv venv
 echo Installazione dipendenze...
 venv\Scripts\pip install -r requirements.txt
 
-echo Creazione lancia.bat...
+echo Creazione lancia.vbs...
 (
-    echo @echo off
-    echo "%~dp0venv\Scripts\pythonw.exe" "%~dp0app.py"
-) > "%~dp0lancia.bat"
+    echo Dim sDir, oShell
+    echo sDir = Left^(WScript.ScriptFullName, InStrRev^(WScript.ScriptFullName, "\"^)^)
+    echo Set oShell = CreateObject^("WScript.Shell"^)
+    echo oShell.Run """" ^& sDir ^& "venv\Scripts\pythonw.exe"" """ ^& sDir ^& "app.py""", 0, False
+) > "%~dp0lancia.vbs"
 
 echo.
-echo Setup completato. Usa lancia.bat per avviare l'app.
+echo Setup completato. Usa lancia.vbs per avviare l'app (nessuna finestra CMD).
 pause
