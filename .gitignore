@@ -4,6 +4,12 @@ venv/
 # Generato da setup.bat
 lancia.bat
 
+# ImageMagick portable (binari grandi, non versionare)
+third-party/
+
+# File spazzatura Windows/bash
+nul
+
 # PyInstaller
 build/
 dist/
