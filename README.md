@@ -3,7 +3,7 @@
 **Autore:** [zoott28354](https://github.com/zoott28354)
 **Repository:** [Image-background-remover-and-ICO-converter](https://github.com/zoott28354/Image-background-remover-and-ICO-converter)
 
-Tool con interfaccia grafica a sidebar per elaborare immagini in 4 modalità diverse:
+Tool con interfaccia grafica a 3 pannelli per elaborare immagini in 4 modalità diverse:
 - **Converti ICO**: Icone Windows multi-risoluzione con rimozione sfondo AI
 - **Favicon Generator**: Favicon web complete con manifest.json PWA
 - **App Store Icons**: Icone ottimizzate per Google Play, Apple Store, Microsoft Store
@@ -133,10 +133,14 @@ Le operazioni nella sezione **Operazioni** si adattano alla modalità selezionat
 
 ### Interfaccia principale
 
-L'interfaccia è divisa in due pannelli:
+L'interfaccia è divisa in tre pannelli:
 
-- **Sidebar sinistra** — Lista immagini: aggiungi, rimuovi singoli file o pulisci tutto
-- **Pannello destro** — Tutte le opzioni: modalità, operazioni, destinazione, avvio
+- **Sidebar sinistra** — Lista immagini: aggiungi, rimuovi singoli file o pulisci tutto. Clicca su un file per selezionarlo e aggiornare la preview
+- **Pannello centrale** — Tutte le opzioni: modalità, operazioni, destinazione, avvio e log
+- **Sidebar destra (Preview)** — Mostra in tempo reale l'immagine originale e il risultato atteso in base alle impostazioni correnti:
+  - Se l'immagine è non quadrata e "Ritaglia a quadrato" è attivo: mostra il padding trasparente applicato
+  - Se l'immagine è non quadrata e "Ritaglia a quadrato" è disattivo (in modalità ICO/Favicon/AppStore): mostra il risultato distorto con avviso ⚠
+  - La preview si adatta automaticamente al ridimensionamento della finestra
 
 **Flusso di utilizzo:**
 1. **Aggiungi file** con il pulsante "+ Aggiungi" (PNG, JPG, SVG, BMP, WebP, GIF)

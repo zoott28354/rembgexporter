@@ -85,18 +85,29 @@ class App(ctk.CTk):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('ConvertICO.App')
         self.title("Convertitore Immagini → ICO")
         self.iconbitmap(_resource_path('convertICO.ico'))
-        self.geometry("1000x700")
-        self.minsize(900, 650)
+        self.geometry("1250x700")
+        self.minsize(1100, 650)
         self.resizable(True, True)
         self._file_list: list[str] = []
+        self._selected_file: str | None = None
+        self._preview_orig_photo = None
+        self._preview_result_photo = None
+        self._img_orig_pil = None    # PIL RGBA, usata per ridisegno dinamico
+        self._img_result_pil = None  # PIL RGBA, usata per ridisegno dinamico
         self._build_ui()
 
     # ── costruzione UI ────────────────────────────────────────────────────────
 
     def _build_ui(self):
-        # Layout sidebar: colonna sinistra 180px, colonna destra flex
+        # Layout a 3 colonne: sidebar sx | contenuto | sidebar dx preview
         self.grid_columnconfigure(0, weight=0, minsize=180)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=0, minsize=220)
+
+        # Colori canvas condivisi da lista file e canvases preview
+        _tb_colors = ctk.ThemeManager.theme["CTkTextbox"]["fg_color"]
+        _is_dark = ctk.get_appearance_mode() == "Dark"
+        self._canvas_bg = _tb_colors[1] if _is_dark else _tb_colors[0]
 
         # ── lista file (SIDEBAR sinistra) ─────────────────────────────────────
         frm_lista = ctk.CTkFrame(self)
@@ -123,11 +134,6 @@ class App(ctk.CTk):
         Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
 
         # Area file con stile identico al log (nessuna scrollbar visibile)
-        # Usa esattamente gli stessi colori di CTkTextbox
-        _tb_colors = ctk.ThemeManager.theme["CTkTextbox"]["fg_color"]
-        _is_dark = ctk.get_appearance_mode() == "Dark"
-        _canvas_bg = _tb_colors[1] if _is_dark else _tb_colors[0]
-
         frm_files_box = ctk.CTkFrame(
             frm_lista,
             fg_color=_tb_colors,
@@ -137,10 +143,10 @@ class App(ctk.CTk):
         frm_files_box.grid_rowconfigure(0, weight=1)
 
         self._canvas_files = tk.Canvas(
-            frm_files_box, bg=_canvas_bg, highlightthickness=0)
+            frm_files_box, bg=self._canvas_bg, highlightthickness=0)
         self._canvas_files.grid(row=0, column=0, padx=4, pady=4, sticky="nsew")
 
-        self.scroll_files = tk.Frame(self._canvas_files, bg=_canvas_bg)
+        self.scroll_files = tk.Frame(self._canvas_files, bg=self._canvas_bg)
         self._cw = self._canvas_files.create_window(0, 0, window=self.scroll_files, anchor="nw")
 
         self.scroll_files.bind("<Configure>", lambda e: self._canvas_files.config(
@@ -154,7 +160,7 @@ class App(ctk.CTk):
         self.scroll_files.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
             int(-1 * (e.delta / 120)), "units"))
 
-        # ── modalità (MAIN CONTENT destra) ────────────────────────────────────
+        # ── modalità (MAIN CONTENT centro) ────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
         frm_mod.grid(row=0, column=1, padx=12, pady=6, sticky="ew")
         frm_mod.grid_columnconfigure(0, weight=1)
@@ -196,14 +202,14 @@ class App(ctk.CTk):
         self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_format_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
         self.frm_format_opts.grid_columnconfigure(1, weight=1)
-        self.frm_format_opts.grid_remove()  # Nascondi inizialmente
+        self.frm_format_opts.grid_remove()
 
         ctk.CTkLabel(self.frm_format_opts, text="Formato:").grid(row=0, column=0, padx=4, sticky="w")
         self.var_formato = tk.StringVar(value="png")
         self.om_formato = ctk.CTkOptionMenu(
             self.frm_format_opts, variable=self.var_formato,
             values=["PNG", "JPG", "WebP", "GIF"], width=100,
-            command=lambda _: self._aggiorna_lbl_output())
+            command=lambda _: (self._aggiorna_lbl_output(), self._aggiorna_preview()))
         self.om_formato.grid(row=0, column=1, padx=(4, 14), sticky="ew")
         Tooltip(self.om_formato, "Formato di output per la conversione")
 
@@ -221,13 +227,14 @@ class App(ctk.CTk):
         # Opzioni app store
         self.frm_appstore_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_appstore_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
-        self.frm_appstore_opts.grid_remove()  # Nascondi inizialmente
+        self.frm_appstore_opts.grid_remove()
 
         ctk.CTkLabel(self.frm_appstore_opts, text="Store:").grid(row=0, column=0, padx=4, sticky="w")
         self.var_store = tk.StringVar(value="google")
         self.om_store = ctk.CTkOptionMenu(
             self.frm_appstore_opts, variable=self.var_store,
-            values=["Google Play", "Apple App Store", "Microsoft Store"], width=150)
+            values=["Google Play", "Apple App Store", "Microsoft Store"], width=150,
+            command=lambda _: self._aggiorna_preview())
         self.om_store.grid(row=0, column=1, padx=4, sticky="ew")
         Tooltip(self.om_store, "Scegli lo store per le dimensioni icone")
 
@@ -276,7 +283,8 @@ class App(ctk.CTk):
         self.lbl_desc.pack(side="left")
 
         self.chk_sq = ctk.CTkCheckBox(frm_op, text="2. Ritaglia a quadrato",
-                                       variable=self.var_sq)
+                                       variable=self.var_sq,
+                                       command=self._aggiorna_preview)
         self.chk_sq.grid(row=2, column=0, padx=12, pady=3, sticky="w")
         Tooltip(self.chk_sq, "Centra l'immagine su sfondo trasparente quadrato")
 
@@ -291,7 +299,7 @@ class App(ctk.CTk):
             text_color=("gray40", "gray60"),
             font=ctk.CTkFont(size=12))
         self.lbl_output_info.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
-        self.lbl_output_info.grid_remove()  # nascosta di default (visibile solo in modalità non-ICO)
+        self.lbl_output_info.grid_remove()
 
         ctk.CTkLabel(frm_out, text="Destinazione output",
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
@@ -333,7 +341,7 @@ class App(ctk.CTk):
         self.progress.set(0)
         self.progress.grid(row=4, column=1, padx=12, pady=(0, 6), sticky="ew")
 
-        # ── log (scrollabile a destra) ────────────────────────────────────────
+        # ── log ───────────────────────────────────────────────────────────────
         frm_log = ctk.CTkFrame(self)
         frm_log.grid(row=5, column=1, padx=12, pady=(0, 12), sticky="nsew")
         frm_log.grid_columnconfigure(0, weight=1)
@@ -350,13 +358,57 @@ class App(ctk.CTk):
         self.log_text.grid(row=1, column=0, padx=8, pady=(0, 10), sticky="nsew")
         self.log_text.configure(state="disabled")
 
+        # ── PREVIEW (SIDEBAR destra) ──────────────────────────────────────────
+        frm_preview = ctk.CTkFrame(self)
+        frm_preview.grid(row=0, column=2, rowspan=100, padx=(0, 12), pady=(6, 12), sticky="nsew")
+        frm_preview.grid_columnconfigure(0, weight=1)
+        frm_preview.grid_rowconfigure(2, weight=1)  # canvas orig
+        frm_preview.grid_rowconfigure(4, weight=1)  # canvas result
+
+        ctk.CTkLabel(frm_preview, text="Preview",
+                     font=ctk.CTkFont(size=13, weight="bold")).grid(
+            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+
+        ctk.CTkLabel(frm_preview, text="Originale",
+                     text_color=("gray40", "gray60"),
+                     font=ctk.CTkFont(size=11)).grid(
+            row=1, column=0, padx=12, pady=(0, 2), sticky="w")
+
+        self._canvas_orig = tk.Canvas(
+            frm_preview, bg=self._canvas_bg, highlightthickness=0, height=130)
+        self._canvas_orig.grid(row=2, column=0, padx=8, pady=(0, 4), sticky="nsew")
+
+        ctk.CTkLabel(frm_preview, text="Risultato",
+                     text_color=("gray40", "gray60"),
+                     font=ctk.CTkFont(size=11)).grid(
+            row=3, column=0, padx=12, pady=(6, 2), sticky="w")
+
+        self._canvas_result = tk.Canvas(
+            frm_preview, bg=self._canvas_bg, highlightthickness=0, height=130)
+        self._canvas_result.grid(row=4, column=0, padx=8, pady=(0, 4), sticky="nsew")
+
+        self.lbl_preview_info = ctk.CTkLabel(
+            frm_preview, text="← Seleziona\nun file",
+            text_color=("gray40", "gray60"),
+            font=ctk.CTkFont(size=11),
+            justify="left")
+        self.lbl_preview_info.grid(row=5, column=0, padx=12, pady=(2, 10), sticky="w")
+
+        # Ridisegna adattato se il canvas viene ridimensionato
+        self._canvas_orig.bind("<Configure>", lambda e: self._redraw_canvas(
+            self._canvas_orig, self._img_orig_pil, '_preview_orig_photo'))
+        self._canvas_result.bind("<Configure>", lambda e: self._redraw_canvas(
+            self._canvas_result, self._img_result_pil, '_preview_result_photo'))
+
     # ── gestione lista file ───────────────────────────────────────────────────
 
     def _render_file_list(self):
         for w in self.scroll_files.winfo_children():
             w.destroy()
         for i, path in enumerate(self._file_list):
-            row = ctk.CTkFrame(self.scroll_files, fg_color="transparent")
+            is_sel = (path == self._selected_file)
+            row_bg = ("gray75", "gray30") if is_sel else "transparent"
+            row = ctk.CTkFrame(self.scroll_files, fg_color=row_bg, corner_radius=4)
             row.grid(row=i, column=0, sticky="ew", pady=1)
             row.grid_columnconfigure(0, weight=1)
             lbl = ctk.CTkLabel(row, text=os.path.basename(path), anchor="w")
@@ -367,9 +419,12 @@ class App(ctk.CTk):
                           text_color=("gray30", "gray70"),
                           command=lambda p=path: self._rimuovi_file(p))
             btn.grid(row=0, column=1, padx=(0, 4))
+            # Click per selezionare il file (preview)
+            for widget in (row, lbl):
+                widget.bind("<Button-1>", lambda e, p=path: self._on_file_select(p))
             # Propaga mousewheel al canvas padre
-            for w in (row, lbl, btn):
-                w.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
+            for widget in (row, lbl, btn):
+                widget.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
                     int(-1 * (e.delta / 120)), "units"))
 
     def _aggiungi(self):
@@ -379,15 +434,146 @@ class App(ctk.CTk):
         for f in files:
             if f not in self._file_list:
                 self._file_list.append(f)
+        # Auto-seleziona il primo file aggiunto se nessuno è già selezionato
+        if files and self._selected_file is None and self._file_list:
+            self._selected_file = self._file_list[0]
+            self._aggiorna_preview()
         self._render_file_list()
 
     def _rimuovi_file(self, path: str):
         self._file_list.remove(path)
+        if self._selected_file == path:
+            self._selected_file = self._file_list[0] if self._file_list else None
+            self._aggiorna_preview()
         self._render_file_list()
 
     def _pulisci(self):
         self._file_list.clear()
+        self._selected_file = None
+        self._aggiorna_preview()
         self._render_file_list()
+
+    # ── preview ───────────────────────────────────────────────────────────────
+
+    def _on_file_select(self, path: str):
+        """Seleziona un file per la preview."""
+        self._selected_file = path
+        self._render_file_list()
+        self._aggiorna_preview()
+
+    def _make_checkerboard(self, size, tile=8):
+        """Crea sfondo a scacchiera per visualizzare la trasparenza."""
+        from PIL import Image, ImageDraw
+        w, h = size
+        bg = Image.new('RGB', (w, h), (200, 200, 200))
+        draw = ImageDraw.Draw(bg)
+        for y in range(0, h, tile):
+            for x in range(0, w, tile):
+                if ((x // tile) + (y // tile)) % 2:
+                    draw.rectangle([x, y, x + tile - 1, y + tile - 1], fill=(160, 160, 160))
+        return bg
+
+    def _redraw_canvas(self, canvas, img_pil, photo_attr: str):
+        """Ridisegna l'immagine PIL adattata alle dimensioni correnti del canvas."""
+        from PIL import Image, ImageTk
+        canvas.delete("all")
+        if img_pil is None:
+            return
+        canvas.update_idletasks()
+        cw = canvas.winfo_width()
+        ch = canvas.winfo_height()
+        if cw < 2 or ch < 2:
+            cw, ch = 200, 150
+        pad = 6
+        max_w = max(cw - 2 * pad, 1)
+        max_h = max(ch - 2 * pad, 1)
+
+        thumb = img_pil.copy()
+        thumb.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+        tw, th = thumb.size
+        bg = self._make_checkerboard((tw, th))
+        bg.paste(thumb, mask=thumb.split()[3])
+        photo = ImageTk.PhotoImage(bg)
+        setattr(self, photo_attr, photo)  # mantieni riferimento (evita GC)
+        canvas.create_image(cw // 2, ch // 2, anchor="center", image=photo)
+
+    def _aggiorna_preview(self):
+        """Aggiorna la preview del file selezionato con le impostazioni correnti."""
+        from PIL import Image, ImageDraw
+
+        self._canvas_orig.delete("all")
+        self._canvas_result.delete("all")
+        self._img_orig_pil = None
+        self._img_result_pil = None
+
+        if not self._selected_file:
+            self.lbl_preview_info.configure(text="← Seleziona\nun file")
+            return
+
+        path = self._selected_file
+        ext = os.path.splitext(path)[1].lower()
+
+        try:
+            if ext == '.svg':
+                # Placeholder per SVG (svglib troppo lento per preview live)
+                sz = 200
+                img_orig = Image.new('RGBA', (sz, sz), (70, 70, 70, 255))
+                draw = ImageDraw.Draw(img_orig)
+                draw.text((sz // 2 - 14, sz // 2 - 8), "SVG", fill=(180, 180, 180, 255))
+                w_orig, h_orig = sz, sz
+            else:
+                img_orig = Image.open(path).convert('RGBA')
+                w_orig, h_orig = img_orig.size
+
+            # Immagine risultato in base alle impostazioni e modalità
+            modalita = self.var_modalita.get()
+            non_quadrata = (w_orig != h_orig)
+            forza_quadrato = (modalita in ("ico", "favicon", "appstore"))
+
+            if self.var_sq.get() and non_quadrata:
+                # Padding a quadrato: centra su canvas trasparente
+                size = max(w_orig, h_orig)
+                img_result = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+                img_result.paste(img_orig, ((size - w_orig) // 2, (size - h_orig) // 2))
+                risultato_tag = "padding"
+            elif not self.var_sq.get() and non_quadrata and forza_quadrato:
+                # Nessun padding ma pipeline forza 512×512 → schiacciata/distorta
+                img_result = img_orig.resize((512, 512), Image.Resampling.LANCZOS)
+                risultato_tag = "distorta"
+            else:
+                img_result = img_orig.copy()
+                risultato_tag = "ok"
+
+            # Salva i PIL image per ridisegno dinamico al resize
+            self._img_orig_pil = img_orig
+            self._img_result_pil = img_result
+
+            # Disegna adattati al canvas corrente
+            self._redraw_canvas(self._canvas_orig, self._img_orig_pil, '_preview_orig_photo')
+            self._redraw_canvas(self._canvas_result, self._img_result_pil, '_preview_result_photo')
+
+            # Info output
+            if modalita == "ico":
+                info = f"{w_orig}×{h_orig}\n→ ICO  16–256px"
+            elif modalita == "favicon":
+                info = f"{w_orig}×{h_orig}\n→ ICO + PNG\n   32 / 192 / 512px"
+            elif modalita == "appstore":
+                store = self.var_store.get().replace(" App Store", "").replace(" Store", "")
+                info = f"{w_orig}×{h_orig}\n→ {store} icons"
+            else:
+                fmt = self.var_formato.get().upper()
+                info = f"{w_orig}×{h_orig}\n→ {fmt}"
+
+            if risultato_tag == "padding":
+                sq = max(w_orig, h_orig)
+                info += f"\npadding → {sq}×{sq}"
+            elif risultato_tag == "distorta":
+                info += "\n⚠ distorta → 512×512"
+
+            self.lbl_preview_info.configure(text=info)
+
+        except Exception as e:
+            self.lbl_preview_info.configure(text=f"Preview N/D\n{str(e)[:35]}")
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
@@ -437,17 +623,14 @@ class App(ctk.CTk):
         """Mostra/nascondi opzioni a seconda della modalità selezionata."""
         modalita = self.var_modalita.get()
 
-        # Nascondi tutte le opzioni contestuali formato/store
         self.frm_format_opts.grid_remove()
         self.frm_appstore_opts.grid_remove()
 
-        # Mostra opzioni rilevanti
         if modalita == "format":
             self.frm_format_opts.grid()
         elif modalita == "appstore":
             self.frm_appstore_opts.grid()
 
-        # Checkbox 3 visibile solo in modalità ICO, altrimenti label informativa
         if modalita == "ico":
             self.chk_ico.grid()
             self.lbl_output_info.grid_remove()
@@ -455,6 +638,8 @@ class App(ctk.CTk):
             self.chk_ico.grid_remove()
             self.lbl_output_info.grid()
             self._aggiorna_lbl_output()
+
+        self._aggiorna_preview()
 
     def _set_ui_busy(self, busy: bool):
         stato = "disabled" if busy else "normal"
@@ -483,7 +668,6 @@ class App(ctk.CTk):
             'output_dir': output_dir,
         }
 
-        # Aggiungi parametri specifici della modalità
         if modalita == "format":
             kwargs['formato'] = self.var_formato.get().lower()
             kwargs['qualita'] = self.var_qualita.get()
@@ -501,13 +685,11 @@ class App(ctk.CTk):
                 formato: str = None, qualita: int = 85, store: str = None):
         totale = len(files)
 
-        # Importa le funzioni per le nuove modalità
         from core import converti_formato_batch, genera_favicon_batch, genera_app_store_icons_batch
 
         log_fn = lambda msg: self.after(0, self._log, msg)
 
         if modalita == "ico":
-            # Modalità originale: Converti ICO
             rimuovi_bg = self.var_bg.get()
             quadrato   = self.var_sq.get()
             ico        = self.var_ico.get()
@@ -526,7 +708,6 @@ class App(ctk.CTk):
                 self.after(0, self.progress.set, i / totale)
 
         elif modalita == "format":
-            # Conversione formato (con eventuale rimozione sfondo e ritaglia)
             converti_formato_batch(
                 files, formato, qualita, output_dir, log_fn,
                 rimuovi_bg=self.var_bg.get(),
@@ -536,12 +717,10 @@ class App(ctk.CTk):
             self.after(0, self.progress.set, 1.0)
 
         elif modalita == "favicon":
-            # Favicon generator
             genera_favicon_batch(files, output_dir, log_fn)
             self.after(0, self.progress.set, 1.0)
 
         elif modalita == "appstore":
-            # App store icons
             genera_app_store_icons_batch(files, store, output_dir, log_fn)
             self.after(0, self.progress.set, 1.0)
 
