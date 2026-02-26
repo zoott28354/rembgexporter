@@ -8,6 +8,9 @@ import subprocess
 import tempfile
 from PIL import Image, ImageCms
 
+# Evita la finestra CMD nera su Windows quando si lancia ImageMagick
+_NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+
 ICON_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
 SUPPORTED_EXT = ('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.svg')
 
@@ -190,7 +193,7 @@ def _get_imagemagick_path():
 
     # 3. Prova system PATH
     try:
-        subprocess.run(['magick', '--version'], capture_output=True, check=True)
+        subprocess.run(['magick', '--version'], capture_output=True, check=True, creationflags=_NO_WINDOW)
         return 'magick'
     except (FileNotFoundError, subprocess.CalledProcessError):
         pass
@@ -242,7 +245,7 @@ def salva_ico(img: Image.Image, output_path: str):
             output_path
         ]
 
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
 
     finally:
         # Pulisci file temporaneo
@@ -379,7 +382,7 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
                 # Nessun preprocessing: conversione diretta con ImageMagick
                 cmd = [magick_path, input_path, '-quality', str(qualita), output_path]
 
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
             log_fn(f"[OK] Convertito: {os.path.basename(output_path)}")
 
         except Exception as e:
@@ -438,25 +441,25 @@ def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
                 # 1. favicon.ico (7 frame)
                 ico_path = os.path.join(cartella_out, 'favicon.ico')
                 cmd = [magick_path, tmp_path, '-define', 'icon:auto-resize=256,128,64,48,32,24,16', ico_path]
-                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
                 log_fn(f"  [OK] favicon.ico")
 
                 # 2. favicon.png (32x32)
                 png32_path = os.path.join(cartella_out, 'favicon.png')
                 cmd = [magick_path, tmp_path, '-resize', '32x32', png32_path]
-                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
                 log_fn(f"  [OK] favicon.png (32x32)")
 
                 # 3. favicon-192.png (Android)
                 png192_path = os.path.join(cartella_out, 'favicon-192.png')
                 cmd = [magick_path, tmp_path, '-resize', '192x192', png192_path]
-                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
                 log_fn(f"  [OK] favicon-192.png (Android)")
 
                 # 4. favicon-512.png (iOS)
                 png512_path = os.path.join(cartella_out, 'favicon-512.png')
                 cmd = [magick_path, tmp_path, '-resize', '512x512', png512_path]
-                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
                 log_fn(f"  [OK] favicon-512.png (iOS)")
 
                 # 5. manifest.json (PWA)
@@ -549,7 +552,7 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
                 for w, h, nome_file in dimensioni:
                     output_path = os.path.join(cartella_out, nome_file)
                     cmd = [magick_path, tmp_path, '-resize', f'{w}x{h}', output_path]
-                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
                     log_fn(f"  [OK] {nome_file} ({w}x{h})")
 
                 log_fn(f"[OK] {store.upper()} icons generated")
