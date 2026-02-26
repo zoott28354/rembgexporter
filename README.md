@@ -178,12 +178,16 @@ Image-background-remover-and-ICO-converter/
 ## Installazione
 
 ```bat
+git clone https://github.com/zoott28354/Image-background-remover-and-ICO-converter.git
+cd Image-background-remover-and-ICO-converter
 setup.bat
 ```
 
-Crea il virtual environment, installa tutte le dipendenze e genera `lancia.vbs`.
+`setup.bat` crea il virtual environment, installa tutte le dipendenze e genera `lancia.vbs`.
 
 **Requisiti:** Python 3.10+ installato nel sistema.
+
+> **ImageMagick** è già incluso nel repository (`third-party/imagemagick/magick.exe`) — nessun download aggiuntivo necessario.
 
 ---
 
