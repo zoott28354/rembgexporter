@@ -263,7 +263,7 @@ class App(ctk.CTk):
 
         self.chk_bg = ctk.CTkCheckBox(bg_row, text="1. Rimuovi sfondo",
                                        variable=self.var_bg,
-                                       command=self._toggle_modello)
+                                       command=lambda: (self._toggle_modello(), self._aggiorna_preview()))
         self.chk_bg.pack(side="left", padx=(4, 14))
         Tooltip(self.chk_bg, "Usa AI (rembg) per rimuovere lo sfondo")
 
@@ -569,6 +569,9 @@ class App(ctk.CTk):
                 info += f"\npadding → {sq}×{sq}"
             elif risultato_tag == "distorta":
                 info += "\n⚠ distorta → 512×512"
+
+            if self.var_bg.get():
+                info += "\n— sfondo rimosso non in preview"
 
             self.lbl_preview_info.configure(text=info)
 
