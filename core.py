@@ -314,7 +314,8 @@ def elabora_file(
 
 # ── NUOVE FEATURE ─────────────────────────────────────────────────────────
 
-def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int, output_dir: str, log_fn):
+def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int, output_dir: str, log_fn,
+                            rimuovi_bg: bool = False, modello: str = MODELLO_DEFAULT, quadrato: bool = False):
     """Converte batch di file tra PNG/JPG/WebP/GIF.
 
     Args:
@@ -323,6 +324,9 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
         qualita: 1-100 per qualità compressione
         output_dir: Cartella output (None = stessa cartella di input)
         log_fn: Funzione per logging
+        rimuovi_bg: Se True, rimuove sfondo con rembg prima di convertire
+        modello: Modello rembg da usare
+        quadrato: Se True, ritaglia a quadrato prima di convertire
     """
     if not file_list:
         log_fn("[!] Nessun file in lista.")
@@ -334,30 +338,58 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
         return
 
     magick_path = _get_imagemagick_path()
+    preprocessa = rimuovi_bg or quadrato
 
     for i, input_path in enumerate(file_list, 1):
         nome = os.path.basename(input_path)
         nome_base = os.path.splitext(nome)[0]
+        tmp_png = None
 
         try:
-            # Determina cartella output
             cartella_out = output_dir if output_dir else os.path.dirname(input_path)
-
-            # Costruisci percorso output
             ext_output = '.jpg' if formato_dest == 'jpeg' else f'.{formato_dest}'
             output_path = _path_univoco(os.path.join(cartella_out, nome_base + ext_output))
 
             log_fn(f"[...] Conversione {i}/{len(file_list)}: {nome} -> {formato_dest.upper()}")
 
-            # Usa ImageMagick per convertire
-            # Qualità: -quality 80 per jpg/webp
-            cmd = [magick_path, input_path, '-quality', str(qualita), output_path]
+            if preprocessa:
+                # Carica con PIL per applicare rembg e/o ritaglia
+                img = Image.open(input_path)
+
+                if rimuovi_bg:
+                    log_fn(f"[...] Rimozione sfondo [{modello}]: {nome}")
+                    img = rimuovi_sfondo(img, modello, log_fn)
+
+                if quadrato:
+                    img = ritaglia_quadrato(img)
+
+                # Per JPG: converti RGBA → RGB (JPG non supporta trasparenza)
+                if formato_dest in ('jpg', 'jpeg') and img.mode == 'RGBA':
+                    sfondo = Image.new('RGB', img.size, (255, 255, 255))
+                    sfondo.paste(img, mask=img.split()[3])
+                    img = sfondo
+
+                # Salva su temp PNG e lascia convertire a ImageMagick per qualità
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                    tmp_png = tmp.name
+                    img.save(tmp_png, 'PNG')
+
+                cmd = [magick_path, tmp_png, '-quality', str(qualita), output_path]
+            else:
+                # Nessun preprocessing: conversione diretta con ImageMagick
+                cmd = [magick_path, input_path, '-quality', str(qualita), output_path]
 
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             log_fn(f"[OK] Convertito: {os.path.basename(output_path)}")
 
         except Exception as e:
             log_fn(f"[ERRORE] {nome}: {e}")
+        finally:
+            if tmp_png and os.path.exists(tmp_png):
+                try:
+                    os.remove(tmp_png)
+                except Exception:
+                    pass
 
 
 def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):

@@ -494,8 +494,13 @@ class App(ctk.CTk):
                 self.after(0, self.progress.set, i / totale)
 
         elif modalita == "format":
-            # Conversione formato
-            converti_formato_batch(files, formato, qualita, output_dir, log_fn)
+            # Conversione formato (con eventuale rimozione sfondo e ritaglia)
+            converti_formato_batch(
+                files, formato, qualita, output_dir, log_fn,
+                rimuovi_bg=self.var_bg.get(),
+                modello=self.var_modello.get(),
+                quadrato=self.var_sq.get(),
+            )
             self.after(0, self.progress.set, 1.0)
 
         elif modalita == "favicon":
