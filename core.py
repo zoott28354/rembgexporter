@@ -26,7 +26,7 @@ MODELLI_REMBG = [
 MODELLO_DEFAULT = "birefnet-general"
 
 DESCRIZIONI_MODELLI = {
-    "birefnet-general":      "Più preciso, bordi netti — consigliato per icone",
+    "birefnet-general":      "Più preciso, bordi netti — consigliato",
     "birefnet-general-lite": "Veloce, qualità leggermente inferiore al generale",
     "isnet-general-use":     "Alternativa robusta per oggetti complessi",
     "u2net":                 "Veloce, ideale per batch grandi non critici",

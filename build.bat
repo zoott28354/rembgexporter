@@ -1,5 +1,5 @@
 @echo off
-:: ── ConvertICO build script ───────────────────────────────────────────────
+:: ── rembgexporter build script ────────────────────────────────────────────
 :: Autore : zoott28354
 :: GitHub : https://github.com/zoott28354/Image-background-remover-and-ICO-converter
 :: ─────────────────────────────────────────────────────────────────────────
@@ -11,8 +11,8 @@ if not exist venv\Scripts\python.exe (
 )
 
 venv\Scripts\python.exe -m PyInstaller --onefile --windowed ^
-  --icon=convertICO.ico ^
-  --name=ConvertICO ^
+  --icon=rembgexporter.ico ^
+  --name=rembgexporter ^
   --version-file=version_info.txt ^
   --collect-all customtkinter ^
   --collect-all rembg ^
@@ -27,10 +27,10 @@ venv\Scripts\python.exe -m PyInstaller --onefile --windowed ^
   --hidden-import=scipy.special._cdflib ^
   --hidden-import=pycparser.lextab ^
   --hidden-import=pycparser.yacctab ^
-  --add-data "convertICO.ico;." ^
+  --add-data "rembgexporter.ico;." ^
   --add-data "third-party/imagemagick;imagemagick" ^
   app.py
 
 echo.
-echo Build completata. L'eseguibile si trova in dist\ConvertICO.exe
+echo Build completata. L'eseguibile si trova in dist\rembgexporter.exe
 pause

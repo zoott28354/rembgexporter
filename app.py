@@ -83,8 +83,8 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('ConvertICO.App')
-        self.title("Convertitore Immagini → ICO")
-        self.iconbitmap(_resource_path('convertICO.ico'))
+        self.title("rembgexporter")
+        self.iconbitmap(_resource_path('rembgexporter.ico'))
         self.geometry("1250x700")
         self.minsize(1100, 650)
         self.resizable(True, True)
@@ -169,10 +169,16 @@ class App(ctk.CTk):
                      font=ctk.CTkFont(size=13, weight="bold")).grid(
             row=0, column=0, padx=12, pady=(10, 4), sticky="w")
 
-        self.var_modalita = tk.StringVar(value="ico")
+        self.var_modalita = tk.StringVar(value="format")
 
         mod_row = ctk.CTkFrame(frm_mod, fg_color="transparent")
         mod_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
+
+        self.rad_format = ctk.CTkRadioButton(mod_row, text="Format Conversion",
+                                              variable=self.var_modalita, value="format",
+                                              command=self._on_modalita_change)
+        self.rad_format.pack(side="left", padx=(4, 14))
+        Tooltip(self.rad_format, "Converte batch tra formati\n(PNG, JPG, WebP, GIF)")
 
         self.rad_ico = ctk.CTkRadioButton(mod_row, text="Converti ICO",
                                            variable=self.var_modalita, value="ico",
@@ -191,12 +197,6 @@ class App(ctk.CTk):
                                                 command=self._on_modalita_change)
         self.rad_appstore.pack(side="left", padx=(4, 14))
         Tooltip(self.rad_appstore, "Icone per Google Play,\nApple Store, Microsoft Store")
-
-        self.rad_format = ctk.CTkRadioButton(mod_row, text="Format Conversion",
-                                              variable=self.var_modalita, value="format",
-                                              command=self._on_modalita_change)
-        self.rad_format.pack(side="left", padx=(4, 14))
-        Tooltip(self.rad_format, "Converte batch tra formati\n(PNG, JPG, WebP, GIF)")
 
         # ── opzioni contestuali per modalità ──────────────────────────────────
         self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
@@ -399,6 +399,9 @@ class App(ctk.CTk):
             self._canvas_orig, self._img_orig_pil, '_preview_orig_photo'))
         self._canvas_result.bind("<Configure>", lambda e: self._redraw_canvas(
             self._canvas_result, self._img_result_pil, '_preview_result_photo'))
+
+        # Imposta stato iniziale UI in base alla modalità di default
+        self._on_modalita_change()
 
     # ── gestione lista file ───────────────────────────────────────────────────
 
@@ -617,7 +620,9 @@ class App(ctk.CTk):
             testo = "3.  Output fisso: PNG nelle dimensioni store"
         elif modalita == "format":
             fmt = self.var_formato.get().upper()
-            testo = f"3.  Output: {fmt}"
+            trasparenza = fmt in ("PNG", "WEBP", "GIF")
+            nota = "trasparenza ✓" if trasparenza else "no trasparenza"
+            testo = f"3.  Output: {fmt}  ({nota})"
         else:
             testo = ""
         self.lbl_output_info.configure(text=testo)
@@ -633,6 +638,12 @@ class App(ctk.CTk):
             self.frm_format_opts.grid()
         elif modalita == "appstore":
             self.frm_appstore_opts.grid()
+
+        # chk_sq solo nelle modalità dove il quadrato ha senso
+        if modalita == "format":
+            self.chk_sq.grid_remove()
+        else:
+            self.chk_sq.grid()
 
         if modalita == "ico":
             self.chk_ico.grid()
