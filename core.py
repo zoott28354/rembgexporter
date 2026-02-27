@@ -25,6 +25,31 @@ MODELLI_REMBG = [
 ]
 MODELLO_DEFAULT = "birefnet-general"
 
+
+def gpu_disponibile() -> bool:
+    """Check whether CUDA GPU acceleration is available for ONNX Runtime."""
+    try:
+        import onnxruntime as ort
+        return "CUDAExecutionProvider" in ort.get_available_providers()
+    except Exception:
+        return False
+
+
+def get_gpu_name() -> str | None:
+    """Return the first GPU name via nvidia-smi, or None if not available."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=3,
+            creationflags=_NO_WINDOW,
+        )
+        if result.returncode == 0:
+            name = result.stdout.strip().split('\n')[0].strip()
+            return name if name else None
+    except Exception:
+        pass
+    return None
+
 DESCRIZIONI_MODELLI = {
     "birefnet-general":      "Most precise, sharp edges — recommended",
     "birefnet-general-lite": "Fast, slightly lower quality than general",
@@ -113,15 +138,18 @@ def _pulisci_cache_corrotta(modello: str):
                 pass
 
 
-def rimuovi_sfondo(img: Image.Image, modello: str = MODELLO_DEFAULT, log_fn=print) -> Image.Image:
+def rimuovi_sfondo(img: Image.Image, modello: str = MODELLO_DEFAULT, log_fn=print,
+                   provider: str = "cpu") -> Image.Image:
     """Remove background using rembg with the chosen model. Returns RGBA image."""
     from rembg import remove, new_session
+    providers = (["CUDAExecutionProvider", "CPUExecutionProvider"]
+                 if provider == "gpu" else ["CPUExecutionProvider"])
     if not _modello_in_cache(modello):
         log_fn(f"[...] Downloading model '{modello}' (first use only, please wait...)")
     old_stderr = sys.stderr
     sys.stderr = _ProgressCapture(log_fn)
     try:
-        session = new_session(modello)
+        session = new_session(modello, providers=providers)
     except Exception as e:
         _pulisci_cache_corrotta(modello)
         raise RuntimeError(
@@ -262,6 +290,7 @@ def elabora_file(
     converti_ico: bool,
     modello: str = MODELLO_DEFAULT,
     log_fn=print,
+    provider: str = "cpu",
 ):
     """
     Full pipeline for a single file.
@@ -295,8 +324,8 @@ def elabora_file(
             img = Image.open(input_path)
 
         if rimuovi_bg:
-            log_fn(f"[...] Background removal [{modello}]: {nome}")
-            img = rimuovi_sfondo(img, modello, log_fn)
+            log_fn(f"[...] Background removal [{modello}] [{provider.upper()}]: {nome}")
+            img = rimuovi_sfondo(img, modello, log_fn, provider=provider)
             png_nobg = _path_univoco(os.path.join(cartella_out, nome_base + '_nobg.png'))
             img.save(png_nobg, format='PNG')
             log_fn(f"[OK] PNG no-background: {os.path.basename(png_nobg)}")
@@ -316,7 +345,8 @@ def elabora_file(
 # ── Additional features ────────────────────────────────────────────────────────
 
 def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int, output_dir: str, log_fn,
-                            rimuovi_bg: bool = False, modello: str = MODELLO_DEFAULT, quadrato: bool = False):
+                            rimuovi_bg: bool = False, modello: str = MODELLO_DEFAULT, quadrato: bool = False,
+                            provider: str = "cpu"):
     """Batch convert files between PNG/JPG/WebP/GIF.
 
     Args:
@@ -358,8 +388,8 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
                 img = Image.open(input_path)
 
                 if rimuovi_bg:
-                    log_fn(f"[...] Background removal [{modello}]: {nome}")
-                    img = rimuovi_sfondo(img, modello, log_fn)
+                    log_fn(f"[...] Background removal [{modello}] [{provider.upper()}]: {nome}")
+                    img = rimuovi_sfondo(img, modello, log_fn, provider=provider)
 
                 if quadrato:
                     img = ritaglia_quadrato(img)

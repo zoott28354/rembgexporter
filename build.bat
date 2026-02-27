@@ -24,9 +24,6 @@ venv\Scripts\python.exe -m PyInstaller --onefile --windowed ^
   --copy-metadata Pillow ^
   --copy-metadata numpy ^
   --hidden-import=click ^
-  --hidden-import=scipy.special._cdflib ^
-  --hidden-import=pycparser.lextab ^
-  --hidden-import=pycparser.yacctab ^
   --add-data "RembgExporter.ico;." ^
   --add-data "third-party/imagemagick;imagemagick" ^
   app.py

@@ -1,6 +1,7 @@
 # RembgExporter dependencies
 Pillow
 rembg
+filetype
 click
 onnxruntime
 pyinstaller
