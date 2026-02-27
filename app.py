@@ -719,6 +719,7 @@ class App(ctk.CTk):
         self._img_result_pil = None
 
         if not self._selected_file:
+            self.lbl_preview_orig_label.configure(text=_t("preview_orig"))
             self.lbl_preview_info.configure(text=_t("preview_select"))
             return
 
@@ -732,20 +733,24 @@ class App(ctk.CTk):
                 draw = ImageDraw.Draw(img_orig)
                 draw.text((sz // 2 - 14, sz // 2 - 8), "SVG", fill=(180, 180, 180, 255))
                 w_orig, h_orig = sz, sz
+                self.lbl_preview_orig_label.configure(text=_t("preview_orig"))
             else:
                 img_orig = Image.open(path).convert('RGBA')
                 w_orig, h_orig = img_orig.size
+                self.lbl_preview_orig_label.configure(
+                    text=f'{_t("preview_orig")} ({w_orig}×{h_orig})')
 
             modalita = self.var_modalita.get()
             non_quadrata = (w_orig != h_orig)
             forza_quadrato = (modalita in ("ico", "favicon", "appstore"))
+            ha_sq = (modalita != "format")
 
-            if self.var_sq.get() and non_quadrata:
+            if ha_sq and self.var_sq.get() and non_quadrata:
                 size = max(w_orig, h_orig)
                 img_result = Image.new('RGBA', (size, size), (0, 0, 0, 0))
                 img_result.paste(img_orig, ((size - w_orig) // 2, (size - h_orig) // 2))
                 risultato_tag = "padding"
-            elif not self.var_sq.get() and non_quadrata and forza_quadrato:
+            elif ha_sq and not self.var_sq.get() and non_quadrata and forza_quadrato:
                 img_result = img_orig.resize((512, 512), Image.Resampling.LANCZOS)
                 risultato_tag = "distorta"
             else:
@@ -781,6 +786,7 @@ class App(ctk.CTk):
             self.lbl_preview_info.configure(text=info)
 
         except Exception as e:
+            self.lbl_preview_orig_label.configure(text=_t("preview_orig"))
             self.lbl_preview_info.configure(text=f"Preview N/A\n{str(e)[:35]}")
 
     # ── helpers ───────────────────────────────────────────────────────────────
