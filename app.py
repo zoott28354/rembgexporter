@@ -211,9 +211,9 @@ ctk.set_default_color_theme("blue")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('rembgexporter.App')
-        self.title("rembgexporter")
-        self.iconbitmap(_resource_path('rembgexporter.ico'))
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('RembgExporter.App')
+        self.title("RembgExporter")
+        self.iconbitmap(_resource_path('RembgExporter.ico'))
         self.geometry("1250x700")
         self.minsize(1100, 650)
         self.resizable(True, True)

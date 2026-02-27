@@ -1,5 +1,5 @@
 @echo off
-:: ── rembgexporter build script ────────────────────────────────────────────
+:: ── RembgExporter build script ────────────────────────────────────────────
 :: Author : zoott28354
 :: GitHub : https://github.com/zoott28354/rembgexporter
 :: ─────────────────────────────────────────────────────────────────────────
@@ -11,8 +11,8 @@ if not exist venv\Scripts\python.exe (
 )
 
 venv\Scripts\python.exe -m PyInstaller --onefile --windowed ^
-  --icon=rembgexporter.ico ^
-  --name=rembgexporter ^
+  --icon=RembgExporter.ico ^
+  --name=RembgExporter ^
   --version-file=version_info.txt ^
   --collect-all customtkinter ^
   --collect-all rembg ^
@@ -27,10 +27,10 @@ venv\Scripts\python.exe -m PyInstaller --onefile --windowed ^
   --hidden-import=scipy.special._cdflib ^
   --hidden-import=pycparser.lextab ^
   --hidden-import=pycparser.yacctab ^
-  --add-data "rembgexporter.ico;." ^
+  --add-data "RembgExporter.ico;." ^
   --add-data "third-party/imagemagick;imagemagick" ^
   app.py
 
 echo.
-echo Build complete. The executable is located at dist\rembgexporter.exe
+echo Build complete. The executable is located at dist\RembgExporter.exe
 pause
