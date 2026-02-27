@@ -1,3 +1,4 @@
+# RembgExporter dependencies
 Pillow
 rembg
 click
