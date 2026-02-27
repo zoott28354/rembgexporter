@@ -7,15 +7,150 @@ from tkinter import filedialog
 
 import customtkinter as ctk
 
+# ── i18n ──────────────────────────────────────────────────────────────────────
+_lang = "en"
 
-def _resource_path(nome: str) -> str:
-    """Risolve il percorso di una risorsa sia in modalità script che dentro l'exe PyInstaller."""
+STRINGS = {
+    "en": {
+        "images_label":          "Images",
+        "add_btn":               "+ Add",
+        "clear_btn":             "Clear all",
+        "add_tooltip":           "Select images to process\n(PNG, JPG, SVG)",
+        "clear_tooltip":         "Remove all files from the list",
+        "mode_label":            "Mode",
+        "mode_format":           "Format Conversion",
+        "mode_ico":              "Convert ICO",
+        "mode_favicon":          "Favicon Generator",
+        "mode_appstore":         "App Store Icons",
+        "mode_format_tooltip":   "Batch convert between formats\n(PNG, JPG, WebP, GIF)",
+        "mode_ico_tooltip":      "Multi-resolution Windows icons\nwith AI background removal",
+        "mode_favicon_tooltip":  "Complete web favicon\n(ICO + PNG + manifest.json)",
+        "mode_appstore_tooltip": "Icons for Google Play,\nApple Store, Microsoft Store",
+        "format_label":          "Format:",
+        "quality_label":         "Quality:",
+        "quality_tooltip":       "1 = fast/large\n100 = slow/small",
+        "format_tooltip":        "Output format for conversion",
+        "store_label":           "Store:",
+        "store_tooltip":         "Choose store for icon sizes",
+        "ops_label":             "Operations",
+        "remove_bg":             "1. Remove background",
+        "remove_bg_tooltip":     "Use AI (rembg) to remove background",
+        "model_label":           "Model:",
+        "model_tooltip":         "Choose AI model for background removal",
+        "crop_square":           "2. Crop to square",
+        "crop_square_tooltip":   "Center image on transparent square background",
+        "convert_ico":           "3. Convert to ICO  (otherwise save PNG)",
+        "convert_ico_tooltip":   "Convert to multi-frame ICO\n(If no, save PNG only)",
+        "output_dest_label":     "Output destination",
+        "dest_same":             "Same folder as source file",
+        "dest_custom":           "Custom folder:",
+        "choose_btn":            "Choose...",
+        "choose_tooltip":        "Select output folder",
+        "process_btn":           "PROCESS",
+        "process_tooltip":       "Start processing selected files",
+        "log_label":             "Log",
+        "preview_label":         "Preview",
+        "preview_orig":          "Original",
+        "preview_result":        "Result",
+        "preview_select":        "← Select\na file",
+        "output_fixed_favicon":  "3.  Fixed output: ICO + PNG + manifest.json",
+        "output_fixed_appstore": "3.  Fixed output: PNG at store dimensions",
+        "transparency_yes":      "transparency ✓",
+        "transparency_no":       "no transparency",
+        "distorted_info":        "⚠ distorted → 512×512",
+        "bg_removed_preview":    "— bg removal not in preview",
+        "no_files_log":          "[!] No files in list.",
+        "invalid_dir_log":       "[ERROR] Invalid output folder.",
+        "done_log":              "─── Done ───",
+        "open_images_title":     "Select images",
+        "choose_dir_title":      "Choose output folder",
+        "images_types_label":    "Images",
+        # Model descriptions
+        "desc_birefnet-general":      "Most precise, sharp edges — recommended",
+        "desc_birefnet-general-lite": "Fast, slightly lower quality than general",
+        "desc_isnet-general-use":     "Robust alternative for complex objects",
+        "desc_u2net":                 "Fast, ideal for large non-critical batches",
+        "desc_u2net_human_seg":       "Optimized for human subjects",
+        "desc_isnet-anime":           "For illustrations, cartoons and anime",
+    },
+    "it": {
+        "images_label":          "Immagini",
+        "add_btn":               "+ Aggiungi",
+        "clear_btn":             "Pulisci tutto",
+        "add_tooltip":           "Seleziona immagini da elaborare\n(PNG, JPG, SVG)",
+        "clear_tooltip":         "Rimuovi tutti i file dalla lista",
+        "mode_label":            "Modalità",
+        "mode_format":           "Format Conversion",
+        "mode_ico":              "Converti ICO",
+        "mode_favicon":          "Favicon Generator",
+        "mode_appstore":         "App Store Icons",
+        "mode_format_tooltip":   "Converte batch tra formati\n(PNG, JPG, WebP, GIF)",
+        "mode_ico_tooltip":      "Icone Windows multi-risoluzione\ncon rimozione sfondo AI",
+        "mode_favicon_tooltip":  "Favicon web complete\n(ICO + PNG + manifest.json)",
+        "mode_appstore_tooltip": "Icone per Google Play,\nApple Store, Microsoft Store",
+        "format_label":          "Formato:",
+        "quality_label":         "Qualità:",
+        "quality_tooltip":       "1 = veloce/pesante\n100 = lento/leggero",
+        "format_tooltip":        "Formato di output per la conversione",
+        "store_label":           "Store:",
+        "store_tooltip":         "Scegli lo store per le dimensioni icone",
+        "ops_label":             "Operazioni",
+        "remove_bg":             "1. Rimuovi sfondo",
+        "remove_bg_tooltip":     "Usa AI (rembg) per rimuovere lo sfondo",
+        "model_label":           "Modello:",
+        "model_tooltip":         "Scegli il modello AI per rimozione sfondo",
+        "crop_square":           "2. Ritaglia a quadrato",
+        "crop_square_tooltip":   "Centra l'immagine su sfondo trasparente quadrato",
+        "convert_ico":           "3. Converti in ICO  (altrimenti salva PNG)",
+        "convert_ico_tooltip":   "Converti in ICO multi-frame\n(Se no, salva solo PNG)",
+        "output_dest_label":     "Destinazione output",
+        "dest_same":             "Stessa cartella del file",
+        "dest_custom":           "Cartella personalizzata:",
+        "choose_btn":            "Scegli...",
+        "choose_tooltip":        "Seleziona la cartella di output",
+        "process_btn":           "PROCESSA",
+        "process_tooltip":       "Avvia l'elaborazione dei file selezionati",
+        "log_label":             "Log",
+        "preview_label":         "Preview",
+        "preview_orig":          "Originale",
+        "preview_result":        "Risultato",
+        "preview_select":        "← Seleziona\nun file",
+        "output_fixed_favicon":  "3.  Output fisso: ICO + PNG + manifest.json",
+        "output_fixed_appstore": "3.  Output fisso: PNG nelle dimensioni store",
+        "transparency_yes":      "trasparenza ✓",
+        "transparency_no":       "no trasparenza",
+        "distorted_info":        "⚠ distorta → 512×512",
+        "bg_removed_preview":    "— sfondo rimosso non in preview",
+        "no_files_log":          "[!] Nessun file in lista.",
+        "invalid_dir_log":       "[ERRORE] Cartella di output non valida.",
+        "done_log":              "─── Completato ───",
+        "open_images_title":     "Seleziona immagini",
+        "choose_dir_title":      "Scegli cartella di output",
+        "images_types_label":    "Immagini",
+        # Descrizioni modelli
+        "desc_birefnet-general":      "Più preciso, bordi netti — consigliato",
+        "desc_birefnet-general-lite": "Veloce, qualità leggermente inferiore al generale",
+        "desc_isnet-general-use":     "Alternativa robusta per oggetti complessi",
+        "desc_u2net":                 "Veloce, ideale per batch grandi non critici",
+        "desc_u2net_human_seg":       "Ottimizzato per soggetti umani",
+        "desc_isnet-anime":           "Per illustrazioni, cartoon e anime",
+    },
+}
+
+
+def _t(key: str) -> str:
+    """Returns the translation for key in the current language."""
+    return STRINGS.get(_lang, STRINGS["en"]).get(key, key)
+
+
+def _resource_path(name: str) -> str:
+    """Resolves resource path both in script mode and inside PyInstaller exe."""
     base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, nome)
+    return os.path.join(base, name)
 
 
 class Tooltip:
-    """Crea un tooltip (etichetta popup) al passaggio del mouse con delay."""
+    """Creates a popup tooltip on mouse hover with delay."""
     def __init__(self, widget, text):
         self.widget = widget
         self.text = text
@@ -26,22 +161,19 @@ class Tooltip:
         self.widget.bind("<Leave>", self._hide_tooltip)
 
     def _show_tooltip(self, event):
-        """Schedula la visualizzazione del tooltip con delay di 500ms."""
+        """Schedule tooltip display with 500ms delay."""
         if self._showing or self._tooltip_timer:
             return
         self._tooltip_timer = self.widget.after(500, self._show_tooltip_delayed)
 
     def _show_tooltip_delayed(self):
-        """Mostra il tooltip (chiamato dopo delay)."""
+        """Show the tooltip (called after delay)."""
         if self.tooltip:
             return
-
         try:
             self.tooltip = tk.Toplevel(self.widget)
             self.tooltip.wm_overrideredirect(True)
             self.tooltip.attributes("-topmost", True)
-
-            # Crea label con il testo
             label = tk.Label(
                 self.tooltip, text=self.text,
                 background="#1a1a1a", foreground="#e0e0e0",
@@ -49,8 +181,6 @@ class Tooltip:
                 font=("Arial", 10), padx=8, pady=4
             )
             label.pack()
-
-            # Posiziona il tooltip sopra il widget (approssimato)
             self.tooltip.wm_geometry(f"+{self.widget.winfo_rootx()}+{self.widget.winfo_rooty() - 40}")
             self._showing = True
         except Exception:
@@ -59,11 +189,10 @@ class Tooltip:
             self._tooltip_timer = None
 
     def _hide_tooltip(self, event):
-        """Nasconde il tooltip e cancella timer pending."""
+        """Hide the tooltip and cancel any pending timer."""
         if self._tooltip_timer:
             self.widget.after_cancel(self._tooltip_timer)
             self._tooltip_timer = None
-
         if self.tooltip:
             try:
                 self.tooltip.destroy()
@@ -73,7 +202,7 @@ class Tooltip:
         self._showing = False
 
 
-from core import elabora_file, SUPPORTED_EXT, MODELLI_REMBG, MODELLO_DEFAULT, DESCRIZIONI_MODELLI
+from core import elabora_file, SUPPORTED_EXT, MODELLI_REMBG, MODELLO_DEFAULT
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -82,7 +211,7 @@ ctk.set_default_color_theme("blue")
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('ConvertICO.App')
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('rembgexporter.App')
         self.title("rembgexporter")
         self.iconbitmap(_resource_path('rembgexporter.ico'))
         self.geometry("1250x700")
@@ -92,48 +221,75 @@ class App(ctk.CTk):
         self._selected_file: str | None = None
         self._preview_orig_photo = None
         self._preview_result_photo = None
-        self._img_orig_pil = None    # PIL RGBA, usata per ridisegno dinamico
-        self._img_result_pil = None  # PIL RGBA, usata per ridisegno dinamico
+        self._img_orig_pil = None
+        self._img_result_pil = None
+        self._tooltips: list[tuple[Tooltip, str]] = []
+        self._lang_btns: dict[str, ctk.CTkButton] = {}
         self._build_ui()
 
-    # ── costruzione UI ────────────────────────────────────────────────────────
+    def _tt(self, widget, key: str) -> Tooltip:
+        """Create a tooltip and register it for language updates."""
+        t = Tooltip(widget, _t(key))
+        self._tooltips.append((t, key))
+        return t
+
+    # ── UI construction ────────────────────────────────────────────────────────
 
     def _build_ui(self):
-        # Layout a 3 colonne: sidebar sx | contenuto | sidebar dx preview
+        # 3-column layout: left sidebar | content | right preview sidebar
         self.grid_columnconfigure(0, weight=0, minsize=180)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=0, minsize=220)
 
-        # Colori canvas condivisi da lista file e canvases preview
         _tb_colors = ctk.ThemeManager.theme["CTkTextbox"]["fg_color"]
         _is_dark = ctk.get_appearance_mode() == "Dark"
         self._canvas_bg = _tb_colors[1] if _is_dark else _tb_colors[0]
 
-        # ── lista file (SIDEBAR sinistra) ─────────────────────────────────────
+        # ── file list (left sidebar) ───────────────────────────────────────────
         frm_lista = ctk.CTkFrame(self)
         frm_lista.grid(row=0, column=0, rowspan=100, padx=12, pady=(6, 12), sticky="nsew")
         frm_lista.grid_columnconfigure(0, weight=1)
-        frm_lista.grid_rowconfigure(2, weight=1)  # Canvas cresce verticalmente
+        frm_lista.grid_rowconfigure(2, weight=1)
 
-        ctk.CTkLabel(frm_lista, text="Immagini",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+        # Header row: "Images" label + IT/EN switcher
+        hdr_row = ctk.CTkFrame(frm_lista, fg_color="transparent")
+        hdr_row.grid(row=0, column=0, padx=8, pady=(10, 4), sticky="ew")
+        hdr_row.grid_columnconfigure(0, weight=1)
+
+        self.lbl_images = ctk.CTkLabel(hdr_row, text="",
+                         font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_images.grid(row=0, column=0, sticky="w")
+
+        lang_frame = ctk.CTkFrame(hdr_row, fg_color="transparent")
+        lang_frame.grid(row=0, column=1, sticky="e")
+
+        for lang in ["IT", "EN"]:
+            btn = ctk.CTkButton(
+                lang_frame, text=lang, width=28, height=22,
+                font=ctk.CTkFont(size=10),
+                fg_color="transparent",
+                hover_color=("gray70", "gray40"),
+                text_color=("gray50", "gray60"),
+                command=lambda l=lang.lower(): self._switch_lang(l)
+            )
+            btn.pack(side="left", padx=1)
+            self._lang_btns[lang.lower()] = btn
 
         btn_row = ctk.CTkFrame(frm_lista, fg_color="transparent")
         btn_row.grid(row=1, column=0, padx=8, pady=(0, 4), sticky="w")
-        self.btn_aggiungi = ctk.CTkButton(btn_row, text="+ Aggiungi", width=110,
+
+        self.btn_aggiungi = ctk.CTkButton(btn_row, text="", width=110,
                                            command=self._aggiungi)
         self.btn_aggiungi.pack(side="left", padx=(4, 6))
-        Tooltip(self.btn_aggiungi, "Seleziona immagini da elaborare\n(PNG, JPG, SVG)")
+        self._tt(self.btn_aggiungi, "add_tooltip")
 
-        self.btn_pulisci = ctk.CTkButton(btn_row, text="Pulisci tutto", width=110,
+        self.btn_pulisci = ctk.CTkButton(btn_row, text="", width=110,
                                           fg_color=("gray70", "gray30"), hover_color=("gray60", "gray25"),
                                           text_color=("gray10", "gray90"),
                                           command=self._pulisci)
         self.btn_pulisci.pack(side="left")
-        Tooltip(self.btn_pulisci, "Rimuovi tutti i file dalla lista")
+        self._tt(self.btn_pulisci, "clear_tooltip")
 
-        # Area file con stile identico al log (nessuna scrollbar visibile)
         frm_files_box = ctk.CTkFrame(
             frm_lista,
             fg_color=_tb_colors,
@@ -154,146 +310,147 @@ class App(ctk.CTk):
         self._canvas_files.bind("<Configure>", lambda e: self._canvas_files.itemconfig(
             self._cw, width=e.width))
 
-        # Mousewheel scrolling senza scrollbar visibile
         self._canvas_files.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
             int(-1 * (e.delta / 120)), "units"))
         self.scroll_files.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
             int(-1 * (e.delta / 120)), "units"))
 
-        # ── modalità (MAIN CONTENT centro) ────────────────────────────────────
+        # ── mode (main content center) ─────────────────────────────────────────
         frm_mod = ctk.CTkFrame(self)
         frm_mod.grid(row=0, column=1, padx=12, pady=6, sticky="ew")
         frm_mod.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(frm_mod, text="Modalità",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+        self.lbl_modalita = ctk.CTkLabel(frm_mod, text="",
+                     font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_modalita.grid(row=0, column=0, padx=12, pady=(10, 4), sticky="w")
 
         self.var_modalita = tk.StringVar(value="format")
 
         mod_row = ctk.CTkFrame(frm_mod, fg_color="transparent")
         mod_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
 
-        self.rad_format = ctk.CTkRadioButton(mod_row, text="Format Conversion",
+        self.rad_format = ctk.CTkRadioButton(mod_row, text="",
                                               variable=self.var_modalita, value="format",
                                               command=self._on_modalita_change)
         self.rad_format.pack(side="left", padx=(4, 14))
-        Tooltip(self.rad_format, "Converte batch tra formati\n(PNG, JPG, WebP, GIF)")
+        self._tt(self.rad_format, "mode_format_tooltip")
 
-        self.rad_ico = ctk.CTkRadioButton(mod_row, text="Converti ICO",
+        self.rad_ico = ctk.CTkRadioButton(mod_row, text="",
                                            variable=self.var_modalita, value="ico",
                                            command=self._on_modalita_change)
         self.rad_ico.pack(side="left", padx=(4, 14))
-        Tooltip(self.rad_ico, "Icone Windows multi-risoluzione\ncon rimozione sfondo AI")
+        self._tt(self.rad_ico, "mode_ico_tooltip")
 
-        self.rad_favicon = ctk.CTkRadioButton(mod_row, text="Favicon Generator",
+        self.rad_favicon = ctk.CTkRadioButton(mod_row, text="",
                                                variable=self.var_modalita, value="favicon",
                                                command=self._on_modalita_change)
         self.rad_favicon.pack(side="left", padx=(4, 14))
-        Tooltip(self.rad_favicon, "Favicon web complete\n(ICO + PNG + manifest.json)")
+        self._tt(self.rad_favicon, "mode_favicon_tooltip")
 
-        self.rad_appstore = ctk.CTkRadioButton(mod_row, text="App Store Icons",
+        self.rad_appstore = ctk.CTkRadioButton(mod_row, text="",
                                                 variable=self.var_modalita, value="appstore",
                                                 command=self._on_modalita_change)
         self.rad_appstore.pack(side="left", padx=(4, 14))
-        Tooltip(self.rad_appstore, "Icone per Google Play,\nApple Store, Microsoft Store")
+        self._tt(self.rad_appstore, "mode_appstore_tooltip")
 
-        # ── opzioni contestuali per modalità ──────────────────────────────────
+        # ── format options ─────────────────────────────────────────────────────
         self.frm_format_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_format_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
         self.frm_format_opts.grid_columnconfigure(1, weight=1)
         self.frm_format_opts.grid_remove()
 
-        ctk.CTkLabel(self.frm_format_opts, text="Formato:").grid(row=0, column=0, padx=4, sticky="w")
+        self.lbl_formato_label = ctk.CTkLabel(self.frm_format_opts, text="")
+        self.lbl_formato_label.grid(row=0, column=0, padx=4, sticky="w")
         self.var_formato = tk.StringVar(value="png")
         self.om_formato = ctk.CTkOptionMenu(
             self.frm_format_opts, variable=self.var_formato,
             values=["PNG", "JPG", "WebP", "GIF"], width=100,
             command=lambda _: (self._aggiorna_lbl_output(), self._aggiorna_preview()))
         self.om_formato.grid(row=0, column=1, padx=(4, 14), sticky="ew")
-        Tooltip(self.om_formato, "Formato di output per la conversione")
+        self._tt(self.om_formato, "format_tooltip")
 
-        ctk.CTkLabel(self.frm_format_opts, text="Qualità:").grid(row=0, column=2, padx=4, sticky="w")
+        self.lbl_qualita_label = ctk.CTkLabel(self.frm_format_opts, text="")
+        self.lbl_qualita_label.grid(row=0, column=2, padx=4, sticky="w")
         self.var_qualita = tk.IntVar(value=85)
         self.slider_qualita = ctk.CTkSlider(
             self.frm_format_opts, from_=1, to=100, variable=self.var_qualita,
             number_of_steps=99, width=150)
         self.slider_qualita.grid(row=0, column=3, padx=(4, 10), sticky="ew")
-        Tooltip(self.slider_qualita, "1 = veloce/pesante\n100 = lento/leggero")
+        self._tt(self.slider_qualita, "quality_tooltip")
         self.lbl_qualita = ctk.CTkLabel(self.frm_format_opts, text="85", width=30)
         self.lbl_qualita.grid(row=0, column=4, sticky="w")
         self.slider_qualita.configure(command=lambda v: self.lbl_qualita.configure(text=str(int(float(v)))))
 
-        # Opzioni app store
+        # ── app store options ──────────────────────────────────────────────────
         self.frm_appstore_opts = ctk.CTkFrame(frm_mod, fg_color="transparent")
         self.frm_appstore_opts.grid(row=2, column=0, padx=8, pady=(0, 6), sticky="ew")
         self.frm_appstore_opts.grid_remove()
 
-        ctk.CTkLabel(self.frm_appstore_opts, text="Store:").grid(row=0, column=0, padx=4, sticky="w")
+        self.lbl_store_label = ctk.CTkLabel(self.frm_appstore_opts, text="")
+        self.lbl_store_label.grid(row=0, column=0, padx=4, sticky="w")
         self.var_store = tk.StringVar(value="google")
         self.om_store = ctk.CTkOptionMenu(
             self.frm_appstore_opts, variable=self.var_store,
             values=["Google Play", "Apple App Store", "Microsoft Store"], width=150,
             command=lambda _: self._aggiorna_preview())
         self.om_store.grid(row=0, column=1, padx=4, sticky="ew")
-        Tooltip(self.om_store, "Scegli lo store per le dimensioni icone")
+        self._tt(self.om_store, "store_tooltip")
 
-        # ── operazioni ────────────────────────────────────────────────────────
+        # ── operations ────────────────────────────────────────────────────────
         frm_op = ctk.CTkFrame(self)
         frm_op.grid(row=1, column=1, padx=12, pady=6, sticky="ew")
         frm_op.grid_columnconfigure(0, weight=1)
 
-        # ── output ────────────────────────────────────────────────────────────
+        # ── output destination ─────────────────────────────────────────────────
         frm_out = ctk.CTkFrame(self)
         frm_out.grid(row=2, column=1, padx=12, pady=6, sticky="ew")
         frm_out.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(frm_op, text="Operazioni",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+        self.lbl_ops = ctk.CTkLabel(frm_op, text="",
+                     font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_ops.grid(row=0, column=0, padx=12, pady=(10, 4), sticky="w")
 
         self.var_bg  = tk.BooleanVar(value=True)
         self.var_sq  = tk.BooleanVar(value=True)
         self.var_ico = tk.BooleanVar(value=True)
         self.var_modello = tk.StringVar(value=MODELLO_DEFAULT)
 
-        # Riga rimuovi sfondo
         bg_row = ctk.CTkFrame(frm_op, fg_color="transparent")
         bg_row.grid(row=1, column=0, padx=8, pady=3, sticky="w")
 
-        self.chk_bg = ctk.CTkCheckBox(bg_row, text="1. Rimuovi sfondo",
+        self.chk_bg = ctk.CTkCheckBox(bg_row, text="",
                                        variable=self.var_bg,
                                        command=lambda: (self._toggle_modello(), self._aggiorna_preview()))
         self.chk_bg.pack(side="left", padx=(4, 14))
-        Tooltip(self.chk_bg, "Usa AI (rembg) per rimuovere lo sfondo")
+        self._tt(self.chk_bg, "remove_bg_tooltip")
 
-        ctk.CTkLabel(bg_row, text="Modello:").pack(side="left")
+        self.lbl_modello_label = ctk.CTkLabel(bg_row, text="")
+        self.lbl_modello_label.pack(side="left")
 
         self.om_modello = ctk.CTkOptionMenu(
             bg_row, variable=self.var_modello,
             values=MODELLI_REMBG, width=210,
             command=self._aggiorna_desc_modello)
         self.om_modello.pack(side="left", padx=(6, 10))
-        Tooltip(self.om_modello, "Scegli il modello AI per rimozione sfondo")
+        self._tt(self.om_modello, "model_tooltip")
 
         self.lbl_desc = ctk.CTkLabel(
-            bg_row, text=DESCRIZIONI_MODELLI[MODELLO_DEFAULT],
+            bg_row, text="",
             text_color=("gray40", "gray60"),
             font=ctk.CTkFont(size=11))
         self.lbl_desc.pack(side="left")
 
-        self.chk_sq = ctk.CTkCheckBox(frm_op, text="2. Ritaglia a quadrato",
+        self.chk_sq = ctk.CTkCheckBox(frm_op, text="",
                                        variable=self.var_sq,
                                        command=self._aggiorna_preview)
         self.chk_sq.grid(row=2, column=0, padx=12, pady=3, sticky="w")
-        Tooltip(self.chk_sq, "Centra l'immagine su sfondo trasparente quadrato")
+        self._tt(self.chk_sq, "crop_square_tooltip")
 
-        self.chk_ico = ctk.CTkCheckBox(frm_op, text="3. Converti in ICO  (altrimenti salva PNG)",
+        self.chk_ico = ctk.CTkCheckBox(frm_op, text="",
                                         variable=self.var_ico)
         self.chk_ico.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
-        Tooltip(self.chk_ico, "Converti in ICO multi-frame\n(Se no, salva solo PNG)")
+        self._tt(self.chk_ico, "convert_ico_tooltip")
 
-        # Label informativa per modalità non-ICO (alternativa a chk_ico)
         self.lbl_output_info = ctk.CTkLabel(
             frm_op, text="",
             text_color=("gray40", "gray60"),
@@ -301,41 +458,41 @@ class App(ctk.CTk):
         self.lbl_output_info.grid(row=3, column=0, padx=12, pady=(3, 10), sticky="w")
         self.lbl_output_info.grid_remove()
 
-        ctk.CTkLabel(frm_out, text="Destinazione output",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, columnspan=3, padx=12, pady=(10, 4), sticky="w")
+        self.lbl_output_dest = ctk.CTkLabel(frm_out, text="",
+                     font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_output_dest.grid(row=0, column=0, columnspan=3, padx=12, pady=(10, 4), sticky="w")
 
         self.var_dest = tk.StringVar(value="stessa")
-        ctk.CTkRadioButton(frm_out, text="Stessa cartella del file",
+        self.rad_dest_same = ctk.CTkRadioButton(frm_out, text="",
                            variable=self.var_dest, value="stessa",
-                           command=self._toggle_dest).grid(
-            row=1, column=0, padx=12, pady=3, sticky="w")
+                           command=self._toggle_dest)
+        self.rad_dest_same.grid(row=1, column=0, padx=12, pady=3, sticky="w")
 
         dest_row = ctk.CTkFrame(frm_out, fg_color="transparent")
         dest_row.grid(row=2, column=0, columnspan=3, padx=8, pady=(0, 10), sticky="ew")
         dest_row.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkRadioButton(dest_row, text="Cartella personalizzata:",
+        self.rad_dest_custom = ctk.CTkRadioButton(dest_row, text="",
                            variable=self.var_dest, value="custom",
-                           command=self._toggle_dest).grid(
-            row=0, column=0, padx=4, sticky="w")
+                           command=self._toggle_dest)
+        self.rad_dest_custom.grid(row=0, column=0, padx=4, sticky="w")
 
         self.entry_dest = ctk.CTkEntry(dest_row, state="disabled", width=300)
         self.entry_dest.grid(row=0, column=1, padx=(8, 6), sticky="ew")
 
-        self.btn_scegli = ctk.CTkButton(dest_row, text="Scegli...",
+        self.btn_scegli = ctk.CTkButton(dest_row, text="",
                                          state="disabled", width=90,
                                          command=self._scegli_dest)
         self.btn_scegli.grid(row=0, column=2, padx=(0, 4))
-        Tooltip(self.btn_scegli, "Seleziona la cartella di output")
+        self._tt(self.btn_scegli, "choose_tooltip")
 
-        # ── processa ──────────────────────────────────────────────────────────
+        # ── process button ─────────────────────────────────────────────────────
         self.btn_processa = ctk.CTkButton(
-            self, text="PROCESSA", height=44,
+            self, text="", height=44,
             font=ctk.CTkFont(size=15, weight="bold"),
             command=self._processa)
         self.btn_processa.grid(row=3, column=1, padx=12, pady=(8, 4), sticky="ew")
-        Tooltip(self.btn_processa, "Avvia l'elaborazione dei file selezionati")
+        self._tt(self.btn_processa, "process_tooltip")
 
         self.progress = ctk.CTkProgressBar(self, mode="determinate", height=10)
         self.progress.set(0)
@@ -348,9 +505,9 @@ class App(ctk.CTk):
         frm_log.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(5, weight=1)
 
-        ctk.CTkLabel(frm_log, text="Log",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+        self.lbl_log = ctk.CTkLabel(frm_log, text="",
+                     font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_log.grid(row=0, column=0, padx=12, pady=(10, 4), sticky="w")
 
         self.log_text = ctk.CTkTextbox(
             frm_log, height=160,
@@ -358,52 +515,108 @@ class App(ctk.CTk):
         self.log_text.grid(row=1, column=0, padx=8, pady=(0, 10), sticky="nsew")
         self.log_text.configure(state="disabled")
 
-        # ── PREVIEW (SIDEBAR destra) ──────────────────────────────────────────
+        # ── preview (right sidebar) ────────────────────────────────────────────
         frm_preview = ctk.CTkFrame(self)
         frm_preview.grid(row=0, column=2, rowspan=100, padx=(0, 12), pady=(6, 12), sticky="nsew")
         frm_preview.grid_columnconfigure(0, weight=1)
-        frm_preview.grid_rowconfigure(2, weight=1)  # canvas orig
-        frm_preview.grid_rowconfigure(4, weight=1)  # canvas result
+        frm_preview.grid_rowconfigure(2, weight=1)
+        frm_preview.grid_rowconfigure(4, weight=1)
 
-        ctk.CTkLabel(frm_preview, text="Preview",
-                     font=ctk.CTkFont(size=13, weight="bold")).grid(
-            row=0, column=0, padx=12, pady=(10, 4), sticky="w")
+        self.lbl_preview_header = ctk.CTkLabel(frm_preview, text="",
+                     font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_preview_header.grid(row=0, column=0, padx=12, pady=(10, 4), sticky="w")
 
-        ctk.CTkLabel(frm_preview, text="Originale",
+        self.lbl_preview_orig_label = ctk.CTkLabel(frm_preview, text="",
                      text_color=("gray40", "gray60"),
-                     font=ctk.CTkFont(size=11)).grid(
-            row=1, column=0, padx=12, pady=(0, 2), sticky="w")
+                     font=ctk.CTkFont(size=11))
+        self.lbl_preview_orig_label.grid(row=1, column=0, padx=12, pady=(0, 2), sticky="w")
 
         self._canvas_orig = tk.Canvas(
             frm_preview, bg=self._canvas_bg, highlightthickness=0, height=130)
         self._canvas_orig.grid(row=2, column=0, padx=8, pady=(0, 4), sticky="nsew")
 
-        ctk.CTkLabel(frm_preview, text="Risultato",
+        self.lbl_preview_result_label = ctk.CTkLabel(frm_preview, text="",
                      text_color=("gray40", "gray60"),
-                     font=ctk.CTkFont(size=11)).grid(
-            row=3, column=0, padx=12, pady=(6, 2), sticky="w")
+                     font=ctk.CTkFont(size=11))
+        self.lbl_preview_result_label.grid(row=3, column=0, padx=12, pady=(6, 2), sticky="w")
 
         self._canvas_result = tk.Canvas(
             frm_preview, bg=self._canvas_bg, highlightthickness=0, height=130)
         self._canvas_result.grid(row=4, column=0, padx=8, pady=(0, 4), sticky="nsew")
 
         self.lbl_preview_info = ctk.CTkLabel(
-            frm_preview, text="← Seleziona\nun file",
+            frm_preview, text="",
             text_color=("gray40", "gray60"),
             font=ctk.CTkFont(size=11),
             justify="left")
         self.lbl_preview_info.grid(row=5, column=0, padx=12, pady=(2, 10), sticky="w")
 
-        # Ridisegna adattato se il canvas viene ridimensionato
         self._canvas_orig.bind("<Configure>", lambda e: self._redraw_canvas(
             self._canvas_orig, self._img_orig_pil, '_preview_orig_photo'))
         self._canvas_result.bind("<Configure>", lambda e: self._redraw_canvas(
             self._canvas_result, self._img_result_pil, '_preview_result_photo'))
 
-        # Imposta stato iniziale UI in base alla modalità di default
+        # Apply initial texts and mode state
+        self._set_texts()
         self._on_modalita_change()
 
-    # ── gestione lista file ───────────────────────────────────────────────────
+    # ── language switch ────────────────────────────────────────────────────────
+
+    def _switch_lang(self, lang: str):
+        global _lang
+        _lang = lang
+        self._set_texts()
+
+    def _set_texts(self):
+        """Update all UI widget text to the current language."""
+        # Sidebar
+        self.lbl_images.configure(text=_t("images_label"))
+        self.btn_aggiungi.configure(text=_t("add_btn"))
+        self.btn_pulisci.configure(text=_t("clear_btn"))
+        # Mode
+        self.lbl_modalita.configure(text=_t("mode_label"))
+        self.rad_format.configure(text=_t("mode_format"))
+        self.rad_ico.configure(text=_t("mode_ico"))
+        self.rad_favicon.configure(text=_t("mode_favicon"))
+        self.rad_appstore.configure(text=_t("mode_appstore"))
+        # Format opts
+        self.lbl_formato_label.configure(text=_t("format_label"))
+        self.lbl_qualita_label.configure(text=_t("quality_label"))
+        # Store opts
+        self.lbl_store_label.configure(text=_t("store_label"))
+        # Operations
+        self.lbl_ops.configure(text=_t("ops_label"))
+        self.chk_bg.configure(text=_t("remove_bg"))
+        self.lbl_modello_label.configure(text=_t("model_label"))
+        self.chk_sq.configure(text=_t("crop_square"))
+        self.chk_ico.configure(text=_t("convert_ico"))
+        # Output destination
+        self.lbl_output_dest.configure(text=_t("output_dest_label"))
+        self.rad_dest_same.configure(text=_t("dest_same"))
+        self.rad_dest_custom.configure(text=_t("dest_custom"))
+        self.btn_scegli.configure(text=_t("choose_btn"))
+        # Process / Log / Preview
+        self.btn_processa.configure(text=_t("process_btn"))
+        self.lbl_log.configure(text=_t("log_label"))
+        self.lbl_preview_header.configure(text=_t("preview_label"))
+        self.lbl_preview_orig_label.configure(text=_t("preview_orig"))
+        self.lbl_preview_result_label.configure(text=_t("preview_result"))
+        # Model description
+        self.lbl_desc.configure(text=_t(f"desc_{self.var_modello.get()}"))
+        # Tooltips
+        for tooltip, key in self._tooltips:
+            tooltip.text = _t(key)
+        # Language button highlight
+        for lang, btn in self._lang_btns.items():
+            if lang == _lang:
+                btn.configure(fg_color=("gray50", "gray50"), text_color="white")
+            else:
+                btn.configure(fg_color="transparent", text_color=("gray50", "gray60"))
+        # Refresh dynamic labels
+        self._aggiorna_lbl_output()
+        self._aggiorna_preview()
+
+    # ── file list management ───────────────────────────────────────────────────
 
     def _render_file_list(self):
         for w in self.scroll_files.winfo_children():
@@ -422,22 +635,19 @@ class App(ctk.CTk):
                           text_color=("gray30", "gray70"),
                           command=lambda p=path: self._rimuovi_file(p))
             btn.grid(row=0, column=1, padx=(0, 4))
-            # Click per selezionare il file (preview)
             for widget in (row, lbl):
                 widget.bind("<Button-1>", lambda e, p=path: self._on_file_select(p))
-            # Propaga mousewheel al canvas padre
             for widget in (row, lbl, btn):
                 widget.bind("<MouseWheel>", lambda e: self._canvas_files.yview_scroll(
                     int(-1 * (e.delta / 120)), "units"))
 
     def _aggiungi(self):
-        tipi = [("Immagini", " ".join(f"*{e}" for e in SUPPORTED_EXT)),
-                ("Tutti i file", "*.*")]
-        files = filedialog.askopenfilenames(title="Seleziona immagini", filetypes=tipi)
+        tipi = [(_t("images_types_label"), " ".join(f"*{e}" for e in SUPPORTED_EXT)),
+                ("All files", "*.*")]
+        files = filedialog.askopenfilenames(title=_t("open_images_title"), filetypes=tipi)
         for f in files:
             if f not in self._file_list:
                 self._file_list.append(f)
-        # Auto-seleziona il primo file aggiunto se nessuno è già selezionato
         if files and self._selected_file is None and self._file_list:
             self._selected_file = self._file_list[0]
             self._aggiorna_preview()
@@ -459,13 +669,12 @@ class App(ctk.CTk):
     # ── preview ───────────────────────────────────────────────────────────────
 
     def _on_file_select(self, path: str):
-        """Seleziona un file per la preview."""
         self._selected_file = path
         self._render_file_list()
         self._aggiorna_preview()
 
     def _make_checkerboard(self, size, tile=8):
-        """Crea sfondo a scacchiera per visualizzare la trasparenza."""
+        """Create checkerboard background to visualize transparency."""
         from PIL import Image, ImageDraw
         w, h = size
         bg = Image.new('RGB', (w, h), (200, 200, 200))
@@ -477,7 +686,7 @@ class App(ctk.CTk):
         return bg
 
     def _redraw_canvas(self, canvas, img_pil, photo_attr: str):
-        """Ridisegna l'immagine PIL adattata alle dimensioni correnti del canvas."""
+        """Redraw PIL image fitted to current canvas dimensions."""
         from PIL import Image, ImageTk
         canvas.delete("all")
         if img_pil is None:
@@ -497,11 +706,11 @@ class App(ctk.CTk):
         bg = self._make_checkerboard((tw, th))
         bg.paste(thumb, mask=thumb.split()[3])
         photo = ImageTk.PhotoImage(bg)
-        setattr(self, photo_attr, photo)  # mantieni riferimento (evita GC)
+        setattr(self, photo_attr, photo)
         canvas.create_image(cw // 2, ch // 2, anchor="center", image=photo)
 
     def _aggiorna_preview(self):
-        """Aggiorna la preview del file selezionato con le impostazioni correnti."""
+        """Update the preview for the selected file with current settings."""
         from PIL import Image, ImageDraw
 
         self._canvas_orig.delete("all")
@@ -510,7 +719,7 @@ class App(ctk.CTk):
         self._img_result_pil = None
 
         if not self._selected_file:
-            self.lbl_preview_info.configure(text="← Seleziona\nun file")
+            self.lbl_preview_info.configure(text=_t("preview_select"))
             return
 
         path = self._selected_file
@@ -518,7 +727,6 @@ class App(ctk.CTk):
 
         try:
             if ext == '.svg':
-                # Placeholder per SVG (svglib troppo lento per preview live)
                 sz = 200
                 img_orig = Image.new('RGBA', (sz, sz), (70, 70, 70, 255))
                 draw = ImageDraw.Draw(img_orig)
@@ -528,34 +736,28 @@ class App(ctk.CTk):
                 img_orig = Image.open(path).convert('RGBA')
                 w_orig, h_orig = img_orig.size
 
-            # Immagine risultato in base alle impostazioni e modalità
             modalita = self.var_modalita.get()
             non_quadrata = (w_orig != h_orig)
             forza_quadrato = (modalita in ("ico", "favicon", "appstore"))
 
             if self.var_sq.get() and non_quadrata:
-                # Padding a quadrato: centra su canvas trasparente
                 size = max(w_orig, h_orig)
                 img_result = Image.new('RGBA', (size, size), (0, 0, 0, 0))
                 img_result.paste(img_orig, ((size - w_orig) // 2, (size - h_orig) // 2))
                 risultato_tag = "padding"
             elif not self.var_sq.get() and non_quadrata and forza_quadrato:
-                # Nessun padding ma pipeline forza 512×512 → schiacciata/distorta
                 img_result = img_orig.resize((512, 512), Image.Resampling.LANCZOS)
                 risultato_tag = "distorta"
             else:
                 img_result = img_orig.copy()
                 risultato_tag = "ok"
 
-            # Salva i PIL image per ridisegno dinamico al resize
             self._img_orig_pil = img_orig
             self._img_result_pil = img_result
 
-            # Disegna adattati al canvas corrente
             self._redraw_canvas(self._canvas_orig, self._img_orig_pil, '_preview_orig_photo')
             self._redraw_canvas(self._canvas_result, self._img_result_pil, '_preview_result_photo')
 
-            # Info output
             if modalita == "ico":
                 info = f"{w_orig}×{h_orig}\n→ ICO  16–256px"
             elif modalita == "favicon":
@@ -571,15 +773,15 @@ class App(ctk.CTk):
                 sq = max(w_orig, h_orig)
                 info += f"\npadding → {sq}×{sq}"
             elif risultato_tag == "distorta":
-                info += "\n⚠ distorta → 512×512"
+                info += "\n" + _t("distorted_info")
 
             if self.var_bg.get():
-                info += "\n— sfondo rimosso non in preview"
+                info += "\n" + _t("bg_removed_preview")
 
             self.lbl_preview_info.configure(text=info)
 
         except Exception as e:
-            self.lbl_preview_info.configure(text=f"Preview N/D\n{str(e)[:35]}")
+            self.lbl_preview_info.configure(text=f"Preview N/A\n{str(e)[:35]}")
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
@@ -590,7 +792,7 @@ class App(ctk.CTk):
         self.lbl_desc.configure(text_color=colore)
 
     def _aggiorna_desc_modello(self, modello: str):
-        self.lbl_desc.configure(text=DESCRIZIONI_MODELLI.get(modello, ""))
+        self.lbl_desc.configure(text=_t(f"desc_{modello}"))
 
     def _toggle_dest(self):
         custom = self.var_dest.get() == "custom"
@@ -599,7 +801,7 @@ class App(ctk.CTk):
         self.btn_scegli.configure(state=stato)
 
     def _scegli_dest(self):
-        d = filedialog.askdirectory(title="Scegli cartella di output")
+        d = filedialog.askdirectory(title=_t("choose_dir_title"))
         if d:
             self.entry_dest.configure(state="normal")
             self.entry_dest.delete(0, "end")
@@ -612,23 +814,23 @@ class App(ctk.CTk):
         self.log_text.configure(state="disabled")
 
     def _aggiorna_lbl_output(self):
-        """Aggiorna il testo della label informativa output in base alla modalità."""
+        """Update output info label text based on current mode."""
         modalita = self.var_modalita.get()
         if modalita == "favicon":
-            testo = "3.  Output fisso: ICO + PNG + manifest.json"
+            testo = _t("output_fixed_favicon")
         elif modalita == "appstore":
-            testo = "3.  Output fisso: PNG nelle dimensioni store"
+            testo = _t("output_fixed_appstore")
         elif modalita == "format":
             fmt = self.var_formato.get().upper()
             trasparenza = fmt in ("PNG", "WEBP", "GIF")
-            nota = "trasparenza ✓" if trasparenza else "no trasparenza"
+            nota = _t("transparency_yes") if trasparenza else _t("transparency_no")
             testo = f"3.  Output: {fmt}  ({nota})"
         else:
             testo = ""
         self.lbl_output_info.configure(text=testo)
 
     def _on_modalita_change(self):
-        """Mostra/nascondi opzioni a seconda della modalità selezionata."""
+        """Show/hide options depending on the selected mode."""
         modalita = self.var_modalita.get()
 
         self.frm_format_opts.grid_remove()
@@ -639,7 +841,6 @@ class App(ctk.CTk):
         elif modalita == "appstore":
             self.frm_appstore_opts.grid()
 
-        # chk_sq solo nelle modalità dove il quadrato ha senso
         if modalita == "format":
             self.chk_sq.grid_remove()
         else:
@@ -659,18 +860,18 @@ class App(ctk.CTk):
         stato = "disabled" if busy else "normal"
         self.btn_processa.configure(state=stato)
 
-    # ── elaborazione ──────────────────────────────────────────────────────────
+    # ── processing ────────────────────────────────────────────────────────────
 
     def _processa(self):
         if not self._file_list:
-            self._log("[!] Nessun file in lista.")
+            self._log(_t("no_files_log"))
             return
 
         output_dir = None
         if self.var_dest.get() == "custom":
             output_dir = self.entry_dest.get().strip() or None
             if not output_dir or not os.path.isdir(output_dir):
-                self._log("[ERRORE] Cartella di output non valida.")
+                self._log(_t("invalid_dir_log"))
                 return
 
         self._set_ui_busy(True)
@@ -741,7 +942,7 @@ class App(ctk.CTk):
         self.after(0, self._done)
 
     def _done(self):
-        self._log("─── Completato ───")
+        self._log(_t("done_log"))
         self._set_ui_busy(False)
 
 

@@ -1,83 +1,83 @@
 # rembgexporter
 
-**Autore:** [zoott28354](https://github.com/zoott28354)
+**Author:** [zoott28354](https://github.com/zoott28354)
 **Repository:** [rembgexporter](https://github.com/zoott28354/rembgexporter)
 
-Tool con interfaccia grafica a 3 pannelli per elaborare immagini in 4 modalità diverse:
-- **Converti ICO**: Icone Windows multi-risoluzione con rimozione sfondo AI
-- **Favicon Generator**: Favicon web complete con manifest.json PWA
-- **App Store Icons**: Icone ottimizzate per Google Play, Apple Store, Microsoft Store
-- **Format Conversion**: Conversione batch tra PNG, JPG, WebP, GIF con controllo qualità e rimozione sfondo
+3-panel GUI tool to process images in 4 different modes:
+- **Convert ICO**: Multi-resolution Windows icons with AI background removal
+- **Favicon Generator**: Complete web favicons with PWA manifest.json
+- **App Store Icons**: Optimized icons for Google Play, Apple Store, Microsoft Store
+- **Format Conversion**: Batch conversion between PNG, JPG, WebP, GIF with quality control and background removal
 
 ---
 
-## Modalità di Elaborazione
+## Processing Modes
 
-### 🔧 1. Converti ICO — Pipeline completa per icone Windows
+### 🔧 1. Convert ICO — Full pipeline for Windows icons
 
-Combina tre operazioni in pipeline:
-1. **Rimozione sfondo con AI** — powered by [rembg](https://github.com/danielgatis/rembg)
-2. **Ritaglio a quadrato** — Centra l'immagine su sfondo trasparente
-3. **Conversione ICO multi-risoluzione** — powered by [ImageMagick](https://imagemagick.org)
+Combines three operations in a pipeline:
+1. **AI background removal** — powered by [rembg](https://github.com/danielgatis/rembg)
+2. **Crop to square** — Centers the image on a transparent background
+3. **Multi-resolution ICO conversion** — powered by [ImageMagick](https://imagemagick.org)
 
-**Modelli AI disponibili** (selezionabili dalla GUI):
+**Available AI models** (selectable from the GUI):
 
-| Modello | Caratteristica |
+| Model | Characteristics |
 |---|---|
-| `birefnet-general` | **Più preciso**, bordi netti — consigliato per icone |
-| `birefnet-general-lite` | Veloce, qualità leggermente inferiore |
-| `isnet-general-use` | Alternativa robusta per oggetti complessi |
-| `u2net` | Veloce, ideale per batch grandi |
-| `u2net_human_seg` | Ottimizzato per soggetti umani |
-| `isnet-anime` | Per illustrazioni, cartoon e anime |
+| `birefnet-general` | **Most precise**, sharp edges — recommended |
+| `birefnet-general-lite` | Fast, slightly lower quality |
+| `isnet-general-use` | Robust alternative for complex objects |
+| `u2net` | Fast, ideal for large batches |
+| `u2net_human_seg` | Optimized for human subjects |
+| `isnet-anime` | For illustrations, cartoons and anime |
 
-> I modelli vengono scaricati automaticamente al primo utilizzo nella cartella `~/.u2net/` e poi riutilizzati dalla cache locale. Non serve connessione internet agli usi successivi.
+> Models are downloaded automatically on first use to `~/.u2net/` and then reused from local cache. No internet connection required for subsequent uses.
 
-**Output generato:**
+**Generated output:**
 ```
-nomefile_nobg.png        # PNG con sfondo trasparente (se rimozione sfondo attiva)
-nomefile.ico             # Icona multi-risoluzione 16 · 24 · 32 · 48 · 64 · 128 · 256 px
+filename_nobg.png        # PNG with transparent background (if background removal is active)
+filename.ico             # Multi-resolution icon 16 · 24 · 32 · 48 · 64 · 128 · 256 px
 ```
 
 ---
 
-### 🌐 2. Favicon Generator — Favicon completa per siti web
+### 🌐 2. Favicon Generator — Complete favicon for websites
 
-Genera un pacchetto favicon completo per siti web moderni e PWA.
-Supporta opzionalmente rimozione sfondo AI e ritaglio a quadrato.
+Generates a complete favicon package for modern websites and PWAs.
+Optionally supports AI background removal and crop to square.
 
-**File generati:**
+**Generated files:**
 ```
-favicon.ico              # Icona multi-frame (7 risoluzioni)
-favicon.png              # 32×32 per browser moderni
-favicon-192.png          # 192×192 per Android
-favicon-512.png          # 512×512 per iOS
-manifest.json            # Manifest PWA con riferimenti icone
+favicon.ico              # Multi-frame icon (7 resolutions)
+favicon.png              # 32×32 for modern browsers
+favicon-192.png          # 192×192 for Android
+favicon-512.png          # 512×512 for iOS
+manifest.json            # PWA manifest with icon references
 ```
 
-**Uso:** Copia i file nella root del sito web e aggiungi al `<head>`:
+**Usage:** Copy files to the website root and add to `<head>`:
 ```html
 <link rel="icon" href="/favicon.ico">
 <link rel="manifest" href="/manifest.json">
 ```
 
-> Supporta immagini PNG, JPG e SVG. SVG viene renderizzato automaticamente a 512×512.
+> Supports PNG, JPG and SVG images. SVG is automatically rendered to 512×512.
 
 ---
 
-### 📱 3. App Store Icons — Icone ottimizzate per store applicativi
+### 📱 3. App Store Icons — Optimized icons for app stores
 
-Genera icone con dimensioni esatte per i principali app store.
-Supporta opzionalmente rimozione sfondo AI e ritaglio a quadrato.
+Generates icons with exact dimensions for the main app stores.
+Optionally supports AI background removal and crop to square.
 
 **Google Play Store:**
 ```
-play_store_512.png       # 512×512 icon principale
+play_store_512.png       # 512×512 main icon
 ```
 
 **Apple App Store:**
 ```
-app_store_1024.png       # 1024×1024 icon principale
+app_store_1024.png       # 1024×1024 main icon
 iphone_180.png           # 180×180 iPhone
 ipad_pro_167.png         # 167×167 iPad Pro
 ipad_152.png             # 152×152 iPad standard
@@ -85,101 +85,105 @@ ipad_152.png             # 152×152 iPad standard
 
 **Microsoft Store:**
 ```
-tile_150.png             # 150×150 tile standard
-tile_70.png              # 70×70 tile small
+tile_150.png             # 150×150 standard tile
+tile_70.png              # 70×70 small tile
 ```
 
-> Selezionare lo store dalla dropdown menu. Le immagini vengono ridimensionate e ottimizzate automaticamente.
+> Select the store from the dropdown menu. Images are automatically resized and optimized.
 
 ---
 
-### 🎨 4. Format Conversion — Conversione batch tra formati
+### 🎨 4. Format Conversion — Batch conversion between formats
 
-Converte immagini tra formati con controllo qualità.
-Supporta opzionalmente **rimozione sfondo AI** e **ritaglio a quadrato** prima della conversione.
+Converts images between formats with quality control.
+Optionally supports **AI background removal** and **crop to square** before conversion.
 
-**Formati supportati:**
+**Supported formats:**
 - PNG (lossless)
-- JPG (lossy, quality 1-100) — sfondo bianco se rimozione sfondo attiva
-- WebP (moderno, quality 1-100)
+- JPG (lossy, quality 1-100) — white background if background removal is active
+- WebP (modern, quality 1-100)
 - GIF
 
-**Controllo qualità:** Slider 1-100 (per JPG e WebP)
+**Quality control:** Slider 1-100 (for JPG and WebP)
 
-**Output generato:**
+**Generated output:**
 ```
-nomefile.png / .jpg / .webp / .gif    # Nel formato selezionato
+filename.png / .jpg / .webp / .gif    # In the selected format
 ```
 
-> Supporta elaborazione batch: carica più file contemporaneamente.
+> Supports batch processing: load multiple files at once.
 
 ---
 
-## Operazioni disponibili
+## Available Operations
 
-Le operazioni nella sezione **Operazioni** si adattano alla modalità selezionata:
+The operations in the **Operations** section adapt to the selected mode:
 
-| Operazione | ICO | Favicon | App Store | Format |
+| Operation | ICO | Favicon | App Store | Format |
 |---|---|---|---|---|
-| 1. Rimuovi sfondo (AI) | ✅ | ✅ | ✅ | ✅ |
-| 2. Ritaglia a quadrato | ✅ | ✅ | ✅ | ✅ |
-| 3. Output | checkbox ICO/PNG | info fisso | info fisso | info dinamico |
+| 1. Remove background (AI) | ✅ | ✅ | ✅ | ✅ |
+| 2. Crop to square | ✅ | ✅ | ✅ | — |
+| 3. Output | ICO/PNG checkbox | fixed info | fixed info | dynamic info |
 
-> In modalità non-ICO, l'operazione 3 mostra un'etichetta informativa sull'output fisso o selezionato.
-
----
-
-## Uso dell'app
-
-### Interfaccia principale
-
-L'interfaccia è divisa in tre pannelli:
-
-- **Sidebar sinistra** — Lista immagini: aggiungi, rimuovi singoli file o pulisci tutto. Clicca su un file per selezionarlo e aggiornare la preview
-- **Pannello centrale** — Tutte le opzioni: modalità, operazioni, destinazione, avvio e log
-- **Sidebar destra (Preview)** — Mostra in tempo reale l'immagine originale e il risultato atteso in base alle impostazioni correnti:
-  - Se l'immagine è non quadrata e "Ritaglia a quadrato" è attivo: mostra il padding trasparente applicato
-  - Se l'immagine è non quadrata e "Ritaglia a quadrato" è disattivo (in modalità ICO/Favicon/AppStore): mostra il risultato distorto con avviso ⚠
-  - La preview si adatta automaticamente al ridimensionamento della finestra
-
-**Flusso di utilizzo:**
-1. **Aggiungi file** con il pulsante "+ Aggiungi" (PNG, JPG, SVG, BMP, WebP, GIF)
-2. **Scegli la modalità** nella sezione "Modalità"
-3. **Configura le operazioni** (rimozione sfondo, modello AI, ritaglio)
-4. **Scegli la destinazione** output (stessa cartella o personalizzata)
-5. **Avvia** con il pulsante "PROCESSA"
-6. **Monitora** l'avanzamento nella progress bar e nel log
-
-### Tooltip
-
-Tutti i pulsanti, checkbox e menu mostrano un **tooltip descrittivo** al passaggio del mouse (delay 500ms).
+> In non-ICO modes, operation 3 shows an informational label about the fixed or selected output.
 
 ---
 
-## Struttura del progetto
+## Using the App
+
+### Main interface
+
+The interface is divided into three panels:
+
+- **Left sidebar** — Image list: add, remove single files or clear all. Click a file to select it and update the preview
+- **Center panel** — All options: mode, operations, destination, start and log
+- **Right sidebar (Preview)** — Shows in real time the original image and the expected result based on current settings:
+  - If the image is non-square and "Crop to square" is active: shows the applied transparent padding
+  - If the image is non-square and "Crop to square" is inactive (in ICO/Favicon/AppStore mode): shows the distorted result with ⚠ warning
+  - The preview automatically adapts to window resizing
+
+**Workflow:**
+1. **Add files** with the "+ Add" button (PNG, JPG, SVG, BMP, WebP, GIF)
+2. **Choose the mode** in the "Mode" section
+3. **Configure operations** (background removal, AI model, crop)
+4. **Choose the output destination** (same folder or custom)
+5. **Start** with the "PROCESS" button
+6. **Monitor** progress in the progress bar and log
+
+### Language
+
+The app supports **English** and **Italian**. Use the **IT | EN** toggle in the top-left of the image sidebar to switch language.
+
+### Tooltips
+
+All buttons, checkboxes and menus show a **descriptive tooltip** on mouse hover (500ms delay).
+
+---
+
+## Project structure
 
 ```
 rembgexporter/
-├── app.py                          # Interfaccia GUI (CustomTkinter)
-├── core.py                         # Pipeline elaborazione immagini
-├── build.bat                       # Build exe con PyInstaller
-├── setup.bat                       # Setup venv e dipendenze
-├── lancia.vbs                      # Avvio app senza finestra CMD (generato da setup)
-├── version_info.txt                # Metadati Windows per l'exe (autore, versione, copyright)
-├── requirements.txt                # Dipendenze Python
-├── convertICO.ico                  # Icona applicazione
+├── app.py                          # GUI interface (CustomTkinter)
+├── core.py                         # Image processing pipeline
+├── build.bat                       # Build exe with PyInstaller
+├── setup.bat                       # Setup venv and dependencies
+├── lancia.vbs                      # Start app without CMD window (generated by setup)
+├── version_info.txt                # Windows metadata for the exe (author, version, copyright)
+├── requirements.txt                # Python dependencies
+├── rembgexporter.ico               # Application icon
 │
 ├── third-party/
 │   └── imagemagick/                # ImageMagick 7.1.2 portable
 │       └── magick.exe
 │
-├── venv/                           # Virtual environment (creato da setup.bat)
-└── dist/                           # Exe portabile (generato da build.bat)
+├── venv/                           # Virtual environment (created by setup.bat)
+└── dist/                           # Portable exe (generated by build.bat)
 ```
 
 ---
 
-## Installazione
+## Installation
 
 ```bat
 git clone https://github.com/zoott28354/rembgexporter.git
@@ -187,117 +191,117 @@ cd rembgexporter
 setup.bat
 ```
 
-`setup.bat` crea il virtual environment, installa tutte le dipendenze e genera `lancia.vbs`.
+`setup.bat` creates the virtual environment, installs all dependencies and generates `lancia.vbs`.
 
-**Requisiti:** Python 3.10+ installato nel sistema.
+**Requirements:** Python 3.10+ installed on the system.
 
-> **ImageMagick** è già incluso nel repository (`third-party/imagemagick/magick.exe`) — nessun download aggiuntivo necessario.
+> **ImageMagick** is already included in the repository (`third-party/imagemagick/magick.exe`) — no additional download required.
 
 ---
 
-## Avvio
+## Launch
 
 ```bat
 lancia.vbs
 ```
 
-Avvia l'app **senza finestre CMD** in background. Generato automaticamente da `setup.bat`.
+Starts the app **without CMD windows** in the background. Generated automatically by `setup.bat`.
 
 ---
 
-## Build exe portabile
+## Build portable exe
 
 ```bat
 build.bat
 ```
 
-Genera `dist\ConvertICO.exe` tramite PyInstaller — singolo eseguibile, nessuna installazione necessaria.
+Generates `dist\rembgexporter.exe` via PyInstaller — single executable, no installation required.
 
-**Incluso nella distribuzione:**
-- ✅ Tutte le dipendenze Python (rembg, Pillow, customtkinter, svglib, reportlab, etc.)
-- ✅ **ImageMagick 7.1.2** (per creazione ICO perfette)
-- ✅ Metadati Windows (autore, copyright, URL GitHub visibili in Proprietà → Dettagli)
+**Included in the distribution:**
+- ✅ All Python dependencies (rembg, Pillow, customtkinter, svglib, reportlab, etc.)
+- ✅ **ImageMagick 7.1.2** (for perfect ICO creation)
+- ✅ Windows metadata (author, copyright, GitHub URL visible in Properties → Details)
 
-**Non incluso (scaricato al primo utilizzo):**
-- Modelli rembg AI: verranno scaricati in `~/.u2net/` al primo utilizzo su ogni macchina
+**Not included (downloaded on first use):**
+- rembg AI models: downloaded to `~/.u2net/` on first use on each machine
 
 ---
 
-## Dipendenze principali
+## Main dependencies
 
 ### Python (pip)
 
-| Pacchetto | Ruolo |
+| Package | Role |
 |---|---|
-| `rembg` | Rimozione sfondo AI |
-| `Pillow` | Manipolazione immagini |
-| `onnxruntime` | Esecuzione modelli AI (CPU) |
-| `customtkinter` | Interfaccia grafica moderna |
-| `svglib` + `reportlab` | Rendering SVG a PNG |
-| `pyinstaller` | Build exe portabile |
+| `rembg` | AI background removal |
+| `Pillow` | Image manipulation |
+| `onnxruntime` | AI model execution (CPU) |
+| `customtkinter` | Modern GUI |
+| `svglib` + `reportlab` | SVG to PNG rendering |
+| `pyinstaller` | Portable exe build |
 
-### Esterne (incluse nella distribuzione)
+### External (included in distribution)
 
-| Strumento | Ruolo | Versione |
+| Tool | Role | Version |
 |---|---|---|
-| **ImageMagick** | Creazione ICO multi-frame, favicon, app store icons, format conversion | 7.1.2-Q16-HDRI |
+| **ImageMagick** | Multi-frame ICO creation, favicon, app store icons, format conversion | 7.1.2-Q16-HDRI |
 
 ---
 
-## Tecnologie utilizzate
+## Technologies used
 
-| Tecnologia | Utilizzo |
+| Technology | Usage |
 |---|---|
-| **Python 3.10+** | Linguaggio principale |
-| **CustomTkinter** | GUI moderna con layout sidebar |
-| **rembg** | Rimozione sfondo con AI (reti neurali profonde) |
-| **Pillow (PIL)** | Manipolazione immagini e profili colore |
-| **ImageMagick CLI** | Elaborazione batch, creazione ICO multi-frame, conversione formati |
-| **svglib + reportlab** | Rendering SVG → PNG |
-| **ONNX Runtime** | Esecuzione accelerata modelli AI (CPU) |
-| **PyInstaller** | Packaging exe portabile |
+| **Python 3.10+** | Main language |
+| **CustomTkinter** | Modern GUI with sidebar layout |
+| **rembg** | AI background removal (deep neural networks) |
+| **Pillow (PIL)** | Image manipulation and color profiles |
+| **ImageMagick CLI** | Batch processing, multi-frame ICO creation, format conversion |
+| **svglib + reportlab** | SVG → PNG rendering |
+| **ONNX Runtime** | Accelerated AI model execution (CPU) |
+| **PyInstaller** | Portable exe packaging |
 
 ---
 
-## Esempi d'uso
+## Usage examples
 
-### Esempio 1: Creare un'icona Windows da logo PNG
-
-```
-1. Aggiungi logo.png
-2. Scegli "Converti ICO"
-3. Seleziona modello AI (birefnet-general consigliato)
-4. ✅ Attiva rimozione sfondo e ritaglio quadrato
-5. Clicca "PROCESSA"
-```
-**Output:** `logo_nobg.png`, `logo.ico` (7 risoluzioni: 16→256px)
-
-### Esempio 2: Creare favicon per sito web
+### Example 1: Create a Windows icon from a PNG logo
 
 ```
-1. Aggiungi logo_quadrato.png (almeno 512×512)
-2. Scegli "Favicon Generator"
-3. Clicca "PROCESSA"
+1. Add logo.png
+2. Choose "Convert ICO"
+3. Select AI model (birefnet-general recommended)
+4. ✅ Enable background removal and crop to square
+5. Click "PROCESS"
+```
+**Output:** `logo_nobg.png`, `logo.ico` (7 resolutions: 16→256px)
+
+### Example 2: Create favicon for a website
+
+```
+1. Add logo_square.png (at least 512×512)
+2. Choose "Favicon Generator"
+3. Click "PROCESS"
 ```
 **Output:** `favicon.ico`, `favicon.png`, `favicon-192.png`, `favicon-512.png`, `manifest.json`
 
-### Esempio 3: Preparare icone per Apple App Store
+### Example 3: Prepare icons for Apple App Store
 
 ```
-1. Aggiungi app_icon.png (1024×1024 minimo)
-2. Scegli "App Store Icons"
-3. Seleziona "Apple App Store" dal menu
-4. Clicca "PROCESSA"
+1. Add app_icon.png (1024×1024 minimum)
+2. Choose "App Store Icons"
+3. Select "Apple App Store" from the menu
+4. Click "PROCESS"
 ```
 **Output:** `app_store_1024.png`, `iphone_180.png`, `ipad_pro_167.png`, `ipad_152.png`
 
-### Esempio 4: Convertire foto a WebP con sfondo rimosso
+### Example 4: Convert photo to WebP with background removed
 
 ```
-1. Aggiungi foto.jpg
-2. Scegli "Format Conversion"
-3. Seleziona formato "WebP", qualità 80
-4. ✅ Attiva rimozione sfondo
-5. Clicca "PROCESSA"
+1. Add photo.jpg
+2. Choose "Format Conversion"
+3. Select format "WebP", quality 80
+4. ✅ Enable background removal
+5. Click "PROCESS"
 ```
-**Output:** `foto.webp` con sfondo trasparente
+**Output:** `photo.webp` with transparent background

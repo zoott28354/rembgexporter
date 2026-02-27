@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from PIL import Image, ImageCms
 
-# Evita la finestra CMD nera su Windows quando si lancia ImageMagick
+# Suppress the black CMD window on Windows when launching ImageMagick
 _NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
 ICON_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
@@ -26,46 +26,46 @@ MODELLI_REMBG = [
 MODELLO_DEFAULT = "birefnet-general"
 
 DESCRIZIONI_MODELLI = {
-    "birefnet-general":      "Più preciso, bordi netti — consigliato",
-    "birefnet-general-lite": "Veloce, qualità leggermente inferiore al generale",
-    "isnet-general-use":     "Alternativa robusta per oggetti complessi",
-    "u2net":                 "Veloce, ideale per batch grandi non critici",
-    "u2net_human_seg":       "Ottimizzato per soggetti umani",
-    "isnet-anime":           "Per illustrazioni, cartoon e anime",
+    "birefnet-general":      "Most precise, sharp edges — recommended",
+    "birefnet-general-lite": "Fast, slightly lower quality than general",
+    "isnet-general-use":     "Robust alternative for complex objects",
+    "u2net":                 "Fast, ideal for large non-critical batches",
+    "u2net_human_seg":       "Optimized for human subjects",
+    "isnet-anime":           "For illustrations, cartoons and anime",
 }
 
 
 class _ProgressCapture:
     """
-    Intercetta stderr durante il download di rembg/pooch.
-    tqdm scrive con \\r per aggiornare la riga — filtriamo
-    e mostriamo solo gli aggiornamenti ogni 10% e il completamento.
+    Intercepts stderr during rembg/pooch model download.
+    tqdm writes with \\r to update the line — we filter and show
+    only updates every 10% and the completion message.
     """
     def __init__(self, log_fn):
         self._log = log_fn
         self._ultima_pct = -1
         self._buf = ""
 
-    def write(self, testo):
-        self._buf += testo
-        parti = self._buf.replace('\r', '\n').split('\n')
-        self._buf = parti[-1]
-        for riga in parti[:-1]:
-            self._processa(riga.strip())
+    def write(self, text):
+        self._buf += text
+        parts = self._buf.replace('\r', '\n').split('\n')
+        self._buf = parts[-1]
+        for line in parts[:-1]:
+            self._process(line.strip())
 
-    def _processa(self, riga):
-        if not riga or '%' not in riga:
+    def _process(self, line):
+        if not line or '%' not in line:
             return
-        m = re.search(r'(\d+)%', riga)
+        m = re.search(r'(\d+)%', line)
         if not m:
             return
         pct = int(m.group(1))
         if pct == 100 or pct - self._ultima_pct >= 10:
             self._ultima_pct = pct
-            # rimuove la barra ASCII █▒ e spazi ridondanti
-            pulita = re.sub(r'\|[^\|]*\|', '', riga).strip()
-            pulita = re.sub(r'\s{2,}', '  ', pulita)
-            self._log(f"    {pulita}")
+            # remove ASCII progress bar █▒ and redundant spaces
+            clean = re.sub(r'\|[^\|]*\|', '', line).strip()
+            clean = re.sub(r'\s{2,}', '  ', clean)
+            self._log(f"    {clean}")
 
     def flush(self):
         pass
@@ -75,8 +75,8 @@ class _ProgressCapture:
 
 
 def _path_univoco(path: str) -> str:
-    """Restituisce path invariato se il file non esiste,
-    altrimenti aggiunge (1), (2), ... fino a trovare un nome libero."""
+    """Returns path unchanged if file does not exist,
+    otherwise appends (1), (2), ... until a free name is found."""
     if not os.path.exists(path):
         return path
     base, ext = os.path.splitext(path)
@@ -95,13 +95,13 @@ def _cache_dir() -> str:
 
 
 def _modello_in_cache(modello: str) -> bool:
-    """Controlla se il file del modello è già stato scaricato in ~/.u2net/"""
+    """Check whether the model file has already been downloaded to ~/.u2net/"""
     cartella = _cache_dir()
     return any(modello in f for f in os.listdir(cartella)) if os.path.isdir(cartella) else False
 
 
 def _pulisci_cache_corrotta(modello: str):
-    """Rimuove file parziali/corrotti del modello dalla cache."""
+    """Remove partial/corrupt model files from cache."""
     cartella = _cache_dir()
     if not os.path.isdir(cartella):
         return
@@ -114,10 +114,10 @@ def _pulisci_cache_corrotta(modello: str):
 
 
 def rimuovi_sfondo(img: Image.Image, modello: str = MODELLO_DEFAULT, log_fn=print) -> Image.Image:
-    """Rimuove lo sfondo usando rembg con il modello scelto. Restituisce immagine RGBA."""
+    """Remove background using rembg with the chosen model. Returns RGBA image."""
     from rembg import remove, new_session
     if not _modello_in_cache(modello):
-        log_fn(f"[...] Download modello '{modello}' (solo al primo utilizzo, attendere...)")
+        log_fn(f"[...] Downloading model '{modello}' (first use only, please wait...)")
     old_stderr = sys.stderr
     sys.stderr = _ProgressCapture(log_fn)
     try:
@@ -125,8 +125,8 @@ def rimuovi_sfondo(img: Image.Image, modello: str = MODELLO_DEFAULT, log_fn=prin
     except Exception as e:
         _pulisci_cache_corrotta(modello)
         raise RuntimeError(
-            f"Download del modello '{modello}' fallito ({e}). "
-            "Controlla la connessione e riprova."
+            f"Model download '{modello}' failed ({e}). "
+            "Check your internet connection and try again."
         ) from e
     finally:
         sys.stderr = old_stderr
@@ -137,7 +137,7 @@ def rimuovi_sfondo(img: Image.Image, modello: str = MODELLO_DEFAULT, log_fn=prin
 
 
 def ritaglia_quadrato(img: Image.Image) -> Image.Image:
-    """Centra l'immagine su uno sfondo trasparente quadrato."""
+    """Center the image on a transparent square background."""
     img = img.convert('RGBA')
     w, h = img.size
     size = max(w, h)
@@ -147,35 +147,33 @@ def ritaglia_quadrato(img: Image.Image) -> Image.Image:
 
 
 def _render_svg_to_png(svg_path: str) -> Image.Image:
-    """Renderizza SVG a PNG 512×512 RGBA ad alta qualità."""
+    """Render SVG to 512×512 RGBA PNG at high quality."""
     from svglib.svglib import svg2rlg
     from reportlab.graphics import renderPM
     import tempfile
 
-    # Carica SVG con svglib
     drawing = svg2rlg(svg_path)
     if drawing is None:
-        raise ValueError(f"Impossibile caricare SVG: {svg_path}")
+        raise ValueError(f"Cannot load SVG: {svg_path}")
 
-    # Renderizza a PNG ad alta risoluzione (2× target per qualità maggiore)
+    # Render to PNG at high resolution (2× target for better quality)
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
         tmp_path = tmp.name
 
     renderPM.drawToFile(drawing, tmp_path, fmt='PNG', width=1024, height=1024)
     img = Image.open(tmp_path).convert('RGBA')
 
-    # Ridimensiona a 512×512 con LANCZOS
+    # Resize to 512×512 with LANCZOS
     img = img.resize((512, 512), Image.Resampling.LANCZOS)
 
-    # Cleanup
     os.remove(tmp_path)
 
     return img
 
 
 def _get_imagemagick_path():
-    """Trova il percorso dell'eseguibile ImageMagick (portable o system)."""
-    # 1. Prova cartella third-party/imagemagick nel progetto
+    """Find the ImageMagick executable (portable or system)."""
+    # 1. Try third-party/imagemagick folder in the project
     base_dir = os.path.dirname(__file__)
     portable_paths = [
         os.path.join(base_dir, 'third-party', 'imagemagick', 'magick.exe'),
@@ -185,13 +183,13 @@ def _get_imagemagick_path():
         if os.path.exists(path):
             return path
 
-    # 2. Prova cartella imagemagick nel dist (PyInstaller)
-    if getattr(sys, 'frozen', False):  # Se eseguito via PyInstaller
+    # 2. Try imagemagick folder in dist (PyInstaller)
+    if getattr(sys, 'frozen', False):
         dist_path = os.path.join(sys._MEIPASS, 'imagemagick', 'magick.exe')
         if os.path.exists(dist_path):
             return dist_path
 
-    # 3. Prova system PATH
+    # 3. Try system PATH
     try:
         subprocess.run(['magick', '--version'], capture_output=True, check=True, creationflags=_NO_WINDOW)
         return 'magick'
@@ -199,22 +197,22 @@ def _get_imagemagick_path():
         pass
 
     raise FileNotFoundError(
-        "ImageMagick non trovato! Assicurati di:\n"
-        "1. Estrarre il file .7z in 'third-party/imagemagick/'\n"
-        "2. O installare ImageMagick globalmente"
+        "ImageMagick not found! Make sure to:\n"
+        "1. Extract the .7z file into 'third-party/imagemagick/'\n"
+        "2. Or install ImageMagick globally"
     )
 
 
 def salva_ico(img: Image.Image, output_path: str):
-    """Crea ICO multi-frame perfetta usando ImageMagick.
+    """Create a perfect multi-frame ICO using ImageMagick.
 
-    Flusso:
-    1. Converti immagine a RGBA
-    2. Ridimensiona a 512×512
-    3. Salva come PNG temporaneo
-    4. ImageMagick crea ICO con 7 frame: 256, 128, 64, 48, 32, 24, 16
+    Flow:
+    1. Convert image to RGBA
+    2. Resize to 512×512
+    3. Save as temporary PNG
+    4. ImageMagick creates ICO with 7 frames: 256, 128, 64, 48, 32, 24, 16
     """
-    # 1. Converti al profilo colore sRGB per preservare i colori originali
+    # 1. Convert to sRGB color profile to preserve original colors
     if 'icc_profile' in img.info:
         try:
             profilo_src = ImageCms.ImageCmsProfile(io.BytesIO(img.info['icc_profile']))
@@ -225,18 +223,18 @@ def salva_ico(img: Image.Image, output_path: str):
     else:
         img = img.convert('RGBA')
 
-    # 2. Ridimensiona a 512×512 per qualità massima
+    # 2. Resize to 512×512 for maximum quality
     if img.size != (512, 512):
         img = img.resize((512, 512), Image.Resampling.LANCZOS)
 
-    # 3. Salva come PNG temporaneo
+    # 3. Save as temporary PNG
     tmp_png = None
     try:
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
             tmp_png = tmp.name
             img.save(tmp_png, 'PNG')
 
-        # 4. Chiama ImageMagick per creare ICO multi-frame
+        # 4. Call ImageMagick to create multi-frame ICO
         magick_path = _get_imagemagick_path()
         cmd = [
             magick_path,
@@ -248,7 +246,7 @@ def salva_ico(img: Image.Image, output_path: str):
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
 
     finally:
-        # Pulisci file temporaneo
+        # Clean up temporary file
         if tmp_png and os.path.exists(tmp_png):
             try:
                 os.remove(tmp_png)
@@ -266,42 +264,42 @@ def elabora_file(
     log_fn=print,
 ):
     """
-    Pipeline completa per un singolo file.
-    - output_dir=None  → stessa cartella del file di input
+    Full pipeline for a single file.
+    - output_dir=None  → same folder as input file
     """
     nome = os.path.basename(input_path)
 
     if not os.path.exists(input_path):
-        log_fn(f"[ERRORE] File non trovato: {nome}")
+        log_fn(f"[ERROR] File not found: {nome}")
         return
 
     _, ext = os.path.splitext(input_path)
     if ext.lower() not in SUPPORTED_EXT:
-        log_fn(f"[SALTATO] Formato non supportato ({ext}): {nome}")
+        log_fn(f"[SKIP] Unsupported format ({ext}): {nome}")
         return
 
     cartella_out = output_dir if output_dir else os.path.dirname(input_path)
     nome_base = os.path.splitext(nome)[0]
 
     try:
-        # Renderizza SVG a PNG se necessario (prima di Image.open)
+        # Render SVG to PNG if needed (before Image.open)
         if ext.lower() == '.svg':
             try:
                 log_fn(f"[...] Rendering SVG: {nome}")
                 img = _render_svg_to_png(input_path)
-                log_fn(f"[OK] SVG renderizzato a PNG 512×512")
+                log_fn(f"[OK] SVG rendered to PNG 512×512")
             except Exception as e:
-                log_fn(f"[ERRORE] Rendering SVG fallito: {e}")
+                log_fn(f"[ERROR] SVG rendering failed: {e}")
                 return
         else:
             img = Image.open(input_path)
 
         if rimuovi_bg:
-            log_fn(f"[...] Rimozione sfondo [{modello}]: {nome}")
+            log_fn(f"[...] Background removal [{modello}]: {nome}")
             img = rimuovi_sfondo(img, modello, log_fn)
             png_nobg = _path_univoco(os.path.join(cartella_out, nome_base + '_nobg.png'))
             img.save(png_nobg, format='PNG')
-            log_fn(f"[OK] PNG sfondo rimosso: {os.path.basename(png_nobg)}")
+            log_fn(f"[OK] PNG no-background: {os.path.basename(png_nobg)}")
 
         if quadrato:
             img = ritaglia_quadrato(img)
@@ -309,35 +307,35 @@ def elabora_file(
         if converti_ico:
             output_path = _path_univoco(os.path.join(cartella_out, nome_base + '.ico'))
             salva_ico(img, output_path)
-            log_fn(f"[OK] ICO salvata: {os.path.basename(output_path)}")
+            log_fn(f"[OK] ICO saved: {os.path.basename(output_path)}")
 
     except Exception as e:
-        log_fn(f"[ERRORE] {nome}: {e}")
+        log_fn(f"[ERROR] {nome}: {e}")
 
 
-# ── NUOVE FEATURE ─────────────────────────────────────────────────────────
+# ── Additional features ────────────────────────────────────────────────────────
 
 def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int, output_dir: str, log_fn,
                             rimuovi_bg: bool = False, modello: str = MODELLO_DEFAULT, quadrato: bool = False):
-    """Converte batch di file tra PNG/JPG/WebP/GIF.
+    """Batch convert files between PNG/JPG/WebP/GIF.
 
     Args:
-        file_list: Lista di file da convertire
+        file_list: List of files to convert
         formato_dest: 'png', 'jpg', 'webp', 'gif'
-        qualita: 1-100 per qualità compressione
-        output_dir: Cartella output (None = stessa cartella di input)
-        log_fn: Funzione per logging
-        rimuovi_bg: Se True, rimuove sfondo con rembg prima di convertire
-        modello: Modello rembg da usare
-        quadrato: Se True, ritaglia a quadrato prima di convertire
+        qualita: 1-100 compression quality
+        output_dir: Output folder (None = same folder as input)
+        log_fn: Logging function
+        rimuovi_bg: If True, remove background with rembg before converting
+        modello: rembg model to use
+        quadrato: If True, crop to square before converting
     """
     if not file_list:
-        log_fn("[!] Nessun file in lista.")
+        log_fn("[!] No files in list.")
         return
 
     formato_dest = formato_dest.lower()
     if formato_dest not in ['png', 'jpg', 'jpeg', 'webp', 'gif']:
-        log_fn(f"[ERRORE] Formato non supportato: {formato_dest}")
+        log_fn(f"[ERROR] Unsupported format: {formato_dest}")
         return
 
     magick_path = _get_imagemagick_path()
@@ -353,40 +351,40 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
             ext_output = '.jpg' if formato_dest == 'jpeg' else f'.{formato_dest}'
             output_path = _path_univoco(os.path.join(cartella_out, nome_base + ext_output))
 
-            log_fn(f"[...] Conversione {i}/{len(file_list)}: {nome} -> {formato_dest.upper()}")
+            log_fn(f"[...] Converting {i}/{len(file_list)}: {nome} -> {formato_dest.upper()}")
 
             if preprocessa:
-                # Carica con PIL per applicare rembg e/o ritaglia
+                # Load with PIL to apply rembg and/or crop to square
                 img = Image.open(input_path)
 
                 if rimuovi_bg:
-                    log_fn(f"[...] Rimozione sfondo [{modello}]: {nome}")
+                    log_fn(f"[...] Background removal [{modello}]: {nome}")
                     img = rimuovi_sfondo(img, modello, log_fn)
 
                 if quadrato:
                     img = ritaglia_quadrato(img)
 
-                # Per JPG: converti RGBA → RGB (JPG non supporta trasparenza)
+                # For JPG: convert RGBA → RGB (JPG does not support transparency)
                 if formato_dest in ('jpg', 'jpeg') and img.mode == 'RGBA':
                     sfondo = Image.new('RGB', img.size, (255, 255, 255))
                     sfondo.paste(img, mask=img.split()[3])
                     img = sfondo
 
-                # Salva su temp PNG e lascia convertire a ImageMagick per qualità
+                # Save to temp PNG and let ImageMagick handle quality conversion
                 with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                     tmp_png = tmp.name
                     img.save(tmp_png, 'PNG')
 
                 cmd = [magick_path, tmp_png, '-quality', str(qualita), output_path]
             else:
-                # Nessun preprocessing: conversione diretta con ImageMagick
+                # No preprocessing: direct conversion with ImageMagick
                 cmd = [magick_path, input_path, '-quality', str(qualita), output_path]
 
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
-            log_fn(f"[OK] Convertito: {os.path.basename(output_path)}")
+            log_fn(f"[OK] Converted: {os.path.basename(output_path)}")
 
         except Exception as e:
-            log_fn(f"[ERRORE] {nome}: {e}")
+            log_fn(f"[ERROR] {nome}: {e}")
         finally:
             if tmp_png and os.path.exists(tmp_png):
                 try:
@@ -396,22 +394,22 @@ def converti_formato_batch(file_list: list[str], formato_dest: str, qualita: int
 
 
 def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
-    """Genera favicon completa (ico + png + manifest.json) per ogni file.
+    """Generate complete favicon (ico + png + manifest.json) for each file.
 
-    Genera:
-    - favicon.ico (7 frame: 256, 128, 64, 48, 32, 24, 16)
+    Generates:
+    - favicon.ico (7 frames: 256, 128, 64, 48, 32, 24, 16)
     - favicon.png (32x32)
     - favicon-192.png (Android)
     - favicon-512.png (iOS)
     - manifest.json (PWA)
 
     Args:
-        file_list: Lista di file da elaborare
-        output_dir: Cartella output (None = stessa cartella di input)
-        log_fn: Funzione per logging
+        file_list: List of files to process
+        output_dir: Output folder (None = same folder as input)
+        log_fn: Logging function
     """
     if not file_list:
-        log_fn("[!] Nessun file in lista.")
+        log_fn("[!] No files in list.")
         return
 
     magick_path = _get_imagemagick_path()
@@ -423,22 +421,19 @@ def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
         try:
             log_fn(f"[...] Favicon {i}/{len(file_list)}: {nome}")
 
-            # Determina cartella output
             cartella_out = output_dir if output_dir else os.path.dirname(input_path)
 
-            # Carica immagine
             img = Image.open(input_path)
             if img.size != (512, 512):
                 img = img.resize((512, 512), Image.Resampling.LANCZOS)
             img = img.convert('RGBA')
 
-            # Salva come PNG temporaneo
             with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                 tmp_path = tmp.name
                 img.save(tmp_path, 'PNG')
 
             try:
-                # 1. favicon.ico (7 frame)
+                # 1. favicon.ico (7 frames)
                 ico_path = os.path.join(cartella_out, 'favicon.ico')
                 cmd = [magick_path, tmp_path, '-define', 'icon:auto-resize=256,128,64,48,32,24,16', ico_path]
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=_NO_WINDOW)
@@ -479,31 +474,30 @@ def genera_favicon_batch(file_list: list[str], output_dir: str, log_fn):
                     json.dump(manifest, f, indent=2)
                 log_fn(f"  [OK] manifest.json (PWA)")
 
-                log_fn(f"[OK] Favicon completa generata")
+                log_fn(f"[OK] Complete favicon generated")
 
             finally:
                 os.remove(tmp_path)
 
         except Exception as e:
-            log_fn(f"[ERRORE] {nome}: {e}")
+            log_fn(f"[ERROR] {nome}: {e}")
 
 
 def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: str, log_fn):
-    """Genera icone specifiche per app store (Google Play, Apple, Microsoft).
+    """Generate icons for app stores (Google Play, Apple, Microsoft).
 
     Args:
-        file_list: Lista di file da elaborare
+        file_list: List of files to process
         store: 'google' / 'apple' / 'microsoft'
-        output_dir: Cartella output
-        log_fn: Funzione per logging
+        output_dir: Output folder
+        log_fn: Logging function
     """
     if not file_list:
-        log_fn("[!] Nessun file in lista.")
+        log_fn("[!] No files in list.")
         return
 
     store = store.lower()
 
-    # Dimensioni per store
     store_dims = {
         'google': [
             (512, 512, 'play_store_512.png'),
@@ -521,7 +515,7 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
     }
 
     if store not in store_dims:
-        log_fn(f"[ERRORE] Store non supportato: {store}. Usa: google, apple, microsoft")
+        log_fn(f"[ERROR] Unsupported store: {store}. Use: google, apple, microsoft")
         return
 
     magick_path = _get_imagemagick_path()
@@ -536,11 +530,9 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
 
             cartella_out = output_dir if output_dir else os.path.dirname(input_path)
 
-            # Carica immagine
             img = Image.open(input_path)
             img = img.convert('RGBA')
 
-            # Salva temporaneo
             with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                 tmp_path = tmp.name
                 if img.size != (512, 512):
@@ -548,7 +540,6 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
                 img.save(tmp_path, 'PNG')
 
             try:
-                # Genera ogni dimensione
                 for w, h, nome_file in dimensioni:
                     output_path = os.path.join(cartella_out, nome_file)
                     cmd = [magick_path, tmp_path, '-resize', f'{w}x{h}', output_path]
@@ -561,4 +552,4 @@ def genera_app_store_icons_batch(file_list: list[str], store: str, output_dir: s
                 os.remove(tmp_path)
 
         except Exception as e:
-            log_fn(f"[ERRORE] {nome}: {e}")
+            log_fn(f"[ERROR] {nome}: {e}")
