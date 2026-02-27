@@ -1,7 +1,7 @@
-# Convertitore Immagini → ICO
+# rembgexporter
 
 **Autore:** [zoott28354](https://github.com/zoott28354)
-**Repository:** [Image-background-remover-and-ICO-converter](https://github.com/zoott28354/Image-background-remover-and-ICO-converter)
+**Repository:** [rembgexporter](https://github.com/zoott28354/rembgexporter)
 
 Tool con interfaccia grafica a 3 pannelli per elaborare immagini in 4 modalità diverse:
 - **Converti ICO**: Icone Windows multi-risoluzione con rimozione sfondo AI
@@ -159,7 +159,7 @@ Tutti i pulsanti, checkbox e menu mostrano un **tooltip descrittivo** al passagg
 ## Struttura del progetto
 
 ```
-Image-background-remover-and-ICO-converter/
+rembgexporter/
 ├── app.py                          # Interfaccia GUI (CustomTkinter)
 ├── core.py                         # Pipeline elaborazione immagini
 ├── build.bat                       # Build exe con PyInstaller
@@ -182,8 +182,8 @@ Image-background-remover-and-ICO-converter/
 ## Installazione
 
 ```bat
-git clone https://github.com/zoott28354/Image-background-remover-and-ICO-converter.git
-cd Image-background-remover-and-ICO-converter
+git clone https://github.com/zoott28354/rembgexporter.git
+cd rembgexporter
 setup.bat
 ```
 

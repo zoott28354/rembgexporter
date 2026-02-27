@@ -1,7 +1,7 @@
 @echo off
 :: ── rembgexporter build script ────────────────────────────────────────────
 :: Autore : zoott28354
-:: GitHub : https://github.com/zoott28354/Image-background-remover-and-ICO-converter
+:: GitHub : https://github.com/zoott28354/rembgexporter
 :: ─────────────────────────────────────────────────────────────────────────
 
 if not exist venv\Scripts\python.exe (

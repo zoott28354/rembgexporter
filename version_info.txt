@@ -15,12 +15,12 @@ VSVersionInfo(
         StringStruct(u'CompanyName',      u'zoott28354'),
         StringStruct(u'FileDescription',  u'Image background remover and ICO converter'),
         StringStruct(u'FileVersion',      u'1.0.0'),
-        StringStruct(u'InternalName',     u'ConvertICO'),
+        StringStruct(u'InternalName',     u'rembgexporter'),
         StringStruct(u'LegalCopyright',   u'Copyright (C) 2025 zoott28354'),
-        StringStruct(u'OriginalFilename', u'ConvertICO.exe'),
-        StringStruct(u'ProductName',      u'ConvertICO'),
+        StringStruct(u'OriginalFilename', u'rembgexporter.exe'),
+        StringStruct(u'ProductName',      u'rembgexporter'),
         StringStruct(u'ProductVersion',   u'1.0.0'),
-        StringStruct(u'Comments',         u'https://github.com/zoott28354/Image-background-remover-and-ICO-converter'),
+        StringStruct(u'Comments',         u'https://github.com/zoott28354/rembgexporter'),
       ])
     ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
