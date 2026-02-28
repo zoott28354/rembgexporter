@@ -213,7 +213,7 @@ class App(ctk.CTk):
         super().__init__()
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('RembgExporter.App')
         self.title("RembgExporter")
-        self.iconbitmap(_resource_path('RembgExporter.ico'))
+        self.iconbitmap(_resource_path(os.path.join('src', 'assets', 'RembgExporter.ico')))
         self.geometry("1250x700")
         self.minsize(1100, 650)
         self.resizable(True, True)
